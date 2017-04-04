@@ -1,4 +1,6 @@
-# runner
-Runner framework
+# Runner framework
 
-Simple framework for quick building web applications
+Simple framework for quick building web applications.
+
+Requirements:
+PHP 5.5+
