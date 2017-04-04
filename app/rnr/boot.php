@@ -4,7 +4,7 @@ function autoloader($className) {
 	$classFileName = str_replace('\\', '/', strtolower($className));
 	if(file_exists(AppClassDir.$classFileName.'.php')) require_once(AppClassDir.$classFileName.'.php');
 	else {
-		require_once(RnrDir.'errordocument.php');
+		if(!class_exists('Rnr\ErrorDocument')) require_once(RnrDir.'errordocument.php');
 		class_alias('Rnr\ErrorDocument', $className);
 /*
 		$info = debug_backtrace();
@@ -66,13 +66,13 @@ function Inject($class, $method, $arguments) {
 /* register */
 spl_autoload_register('autoloader');
 
-/*
+
 require(RnrDir.'error.php');
 require(RnrDir.'db.php');
 require(RnrDir.'io.php');
 require(RnrDir.'router.php');
 require(RnrDir.'tools.php');
-*/
+
 use Rnr\utf8;
 use Rnr\DB;
 use Rnr\StopWatch;
