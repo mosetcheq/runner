@@ -14,7 +14,6 @@ abstract class Rnr {
 
 		$this->view = new Output();
 		$this->session = new Session();
-		if(!$this->session->state) $this->session->state = new StdClass;
 
 	}
 

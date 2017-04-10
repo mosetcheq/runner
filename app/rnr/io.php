@@ -59,6 +59,7 @@ class Output {
                 415 => '1.0 415 Unsuported Media Type',
                 416 => '1.0 416 Requested Range Not Satisfiable',
                 417 => '1.0 417 Expectation Failed',
+		500 => '1.0 500 Internal Server Error'
 		);
 
 	public $contentType;
@@ -226,6 +227,9 @@ class Request {
 				parse_str($this->body, $this->data);
 				break;
 		}
+	}
+	public function isMethod($method) {
+		return strtolower($this->method) == strtolower(trim($method));
 	}
 }
 

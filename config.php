@@ -7,9 +7,6 @@ define('AppDir', $_SERVER['DOCUMENT_ROOT'].'/');
 define('AppClassDir', AppDir.'app/');
 define('RnrDir', AppClassDir.'rnr/');
 
-
-define('Licence', 'Test');
-
 define('TemplateSource', AppDir.'html/');
 define('TemplateOutput', AppDir.'template/');
 
