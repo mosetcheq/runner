@@ -100,7 +100,7 @@ if(!$runnerAction->method) $runnerAction->method = defaultGlobalAction;
 $Runner = new $runnerAction->className;
 
 if(!$output) $output = new Rnr\OutputType(null, null, null);
-if(method_exists($Runner, 'onLoad')) $output = call_user_func([$Runner, 'onLoad'], Inject($Runner, 'onLoad', []));
+if(method_exists($Runner, 'onLoad')) $output = call_user_func_array([$Runner, 'onLoad'], Inject($Runner, 'onLoad', []));
 
 /* Pridavani parametru podle POST dat - Kandidat na DEPRECATED */
 if(($_SERVER['REQUEST_METHOD'] == 'POST') && StreamAsParameter){

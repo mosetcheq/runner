@@ -9,6 +9,22 @@ define('OUTPUT_PREVIOUS', 32);
 define('OUTPUT_PLAIN', 64);
 define('OUTPUT_FILE', 128);
 
+if (!function_exists('getallheaders'))
+{
+    function getallheaders()
+    {
+       $headers = array ();
+       foreach ($_SERVER as $name => $value)
+       {
+           if (substr($name, 0, 5) == 'HTTP_')
+           {
+               $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+           }
+       }
+       return $headers;
+    }
+}
+
 class OutputType {
 	public $type;
 	public $template;
@@ -215,6 +231,7 @@ class Request {
 		$this->contentType = $_SERVER['CONTENT_TYPE'];
 		$this->body = file_get_contents('php://input');
 		$this->referer = $_SERVER['HTTP_REFERER'];
+		$this->uri = $_SERVER['REQUEST_URI'];
 		$this->headers = (object)getallheaders();
 		switch($this->content_type) {
 			case('application/json'):
