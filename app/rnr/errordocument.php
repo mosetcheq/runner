@@ -2,7 +2,7 @@
 
 namespace Rnr;
 
-class ErrorDocument {
+class ErrorDocument extends \Rnr{
 
 	public function onLoad() {
 		return ErrorDocument(404);

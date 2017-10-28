@@ -1,14 +1,6 @@
 <?php
 namespace Rnr;
 
-define('OUTPUT_TEMPLATE', 1);
-define('OUTPUT_ERRORDOCUMENT', 2);
-define('OUTPUT_REDIRECT', 4);
-define('OUTPUT_JSON', 8);
-define('OUTPUT_PREVIOUS', 32);
-define('OUTPUT_PLAIN', 64);
-define('OUTPUT_FILE', 128);
-
 if (!function_exists('getallheaders'))
 {
     function getallheaders()
@@ -23,20 +15,6 @@ if (!function_exists('getallheaders'))
        }
        return $headers;
     }
-}
-
-class OutputType {
-	public $type;
-	public $template;
-	public $data1;
-	public $data2;
-
-	public function __construct($type, $template, $data1 = null, $data2 = null) {
-		$this->type = $type;
-		$this->template = $template;
-		$this->data1 = $data1;
-		$this->data2 = $data2;
-	}
 }
 
 class Output {
@@ -82,7 +60,7 @@ class Output {
 	public $charset;
 	public $headers = array();
 
-	private $assigned = null;
+	private $assigned = [];
 
 	public function __construct($content = 'text/html', $charset = 'utf-8') {
 		$this->contentType = $content;
@@ -119,7 +97,7 @@ class Output {
 		ob_start();
 		if($data) $v = $view = (object)$data; else $v = $view = (object)$this->assigned;
 		if(file_exists(TemplateOutput.$source.'.php')) include(TemplateOutput.$source.'.php');
-		elseif(file_exists(TemplateOutputCommon.$source.'.php')) include(TemplateOutputCommon.$source.'.php');
+//		elseif(file_exists(TemplateOutputCommon.$source.'.php')) include(TemplateOutputCommon.$source.'.php');
 		elseif(file_exists("html/{$source}.html")) include("html/{$source}.html");
 		return ob_get_clean();
 	}

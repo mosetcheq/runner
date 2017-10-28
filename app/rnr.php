@@ -17,4 +17,28 @@ abstract class Rnr {
 
 	}
 
+/**
+ * User defined template engine
+ */
+/*
+ 	public function Template($template_name) {
+		$this->view->contentType = 'text/plain';
+		$this->view->charset = 'utf-8';
+		ob_start();
+		echo("Template name: {$template_name}\nAssigned variables:\n");
+		print_r($this->view->GetAssigned());
+		return ob_get_clean();
+	}
+*/
+/*
+	public function BeforeRender() {
+	}
+
+	public function AfterRender() {
+	}
+
+	public function OutputProcessing($output) {
+		return $output;
+	}
+*/
 }

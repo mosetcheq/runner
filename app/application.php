@@ -1,14 +1,13 @@
 <?php
 
-class Documents extends Rnr {
+class Application extends Rnr {
 
-	public function Index($data = null) {
+	public function Main($data = null) {
 
 		$this->view->pagetitle = $this->view->heading = 'Hello world!';
 		$this->view->paragraph = 'Request: '.print_r($data, true);
 
 		return Template('index');
-
 	}
 
 }

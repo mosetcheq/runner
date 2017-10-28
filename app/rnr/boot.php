@@ -4,45 +4,68 @@ function autoloader($className) {
 	$classFileName = str_replace('\\', '/', strtolower($className));
 	if(file_exists(AppClassDir.$classFileName.'.php')) require_once(AppClassDir.$classFileName.'.php');
 	else {
-		if(!class_exists('Rnr\ErrorDocument')) require_once(RnrDir.'errordocument.php');
-		class_alias('Rnr\ErrorDocument', $className);
-/*
-		$info = debug_backtrace();
-		while(!$info[0]['line']) array_shift($info);
-		Rnr\ErrorHandling::Critical(E_ERROR, "Runner Error: Class '{$className}' (".AppClassDir.$className.".php) not found", $info[0]['file'], $info[0]['line'], $info[0]['args']);
-*/
+		if(NoClassAs404) {
+			if(!class_exists('Rnr\ErrorDocument')) require_once(RnrDir.'errordocument.php');
+			class_alias('Rnr\ErrorDocument', $className);
+		} else {
+			$info = debug_backtrace();
+			while(!$info[0]['line']) array_shift($info);
+			Rnr\ErrorHandling::Critical(E_ERROR, "Runner Error: Class '{$className}' (".AppClassDir.$className.".php) not found", $info[0]['file'], $info[0]['line'], $info[0]['args']);
+		}
 	}
-
 }
 
 /* output types - start */
 
+define('OUTPUT_TEMPLATE', 1);
+define('OUTPUT_ERRORDOCUMENT', 2);
+define('OUTPUT_REDIRECT', 4);
+define('OUTPUT_JSON', 8);
+define('OUTPUT_PREVIOUS', 32);
+define('OUTPUT_PLAIN', 64);
+define('OUTPUT_FILE', 128);
+
+class OutputType {
+	public $type;
+	public $template;
+	public $data1;
+	public $data2;
+
+	public function __construct($type, $template, $data1 = null, $data2 = null) {
+		$this->type = $type;
+		$this->template = $template;
+		$this->data1 = $data1;
+		$this->data2 = $data2;
+	}
+}
+
+
 function Template($filename) {
-	return new Rnr\OutputType(OUTPUT_TEMPLATE, $filename, null, null);
+	return new OutputType(OUTPUT_TEMPLATE, $filename, null, null);
 }
 
 function Plain($text, $contentType = 'text/plain', $charset = 'utf-8') {
-	return new Rnr\OutputType(OUTPUT_PLAIN, $text, $contentType, $charset);
+	return new OutputType(OUTPUT_PLAIN, $text, $contentType, $charset);
 }
 
 function ErrorDocument($error, $usertemplate = null) {
-	return new Rnr\OutputType(OUTPUT_ERRORDOCUMENT, $usertemplate, $error, null);
+	return new OutputType(OUTPUT_ERRORDOCUMENT, $usertemplate, $error, null);
 }
 
 function Redirect($url, $code = null) {
-	return new Rnr\OutputType(OUTPUT_REDIRECT, null, $url, $code);
+	return new OutputType(OUTPUT_REDIRECT, null, $url, $code);
 }
 
 function JSON($data) {
-	return new Rnr\OutputType(OUTPUT_JSON, null, $data, null);
+	return new OutputType(OUTPUT_JSON, null, $data, null);
 }
 
 function Previous() {
-	return new Rnr\OutputType(OUTPUT_PREVIOUS, null, null, null);
+	return new OutputType(OUTPUT_PREVIOUS, null, null, null);
 }
 
 function FileContent($source, $content = null, $filename = null) {
-	return new Rnr\OutputType(OUTPUT_FILE, $source, $content, $filename);
+	return new OutputType(OUTPUT_FILE, $source, $content, $filename);
 }
 /* output types - end */
 
@@ -99,7 +122,7 @@ if(!$runnerAction->method) $runnerAction->method = defaultGlobalAction;
 
 $Runner = new $runnerAction->className;
 
-if(!$output) $output = new Rnr\OutputType(null, null, null);
+if(!$output) $output = new OutputType(null, null, null);
 if(method_exists($Runner, 'onLoad')) $output = call_user_func_array([$Runner, 'onLoad'], Inject($Runner, 'onLoad', []));
 
 /* Pridavani parametru podle POST dat - Kandidat na DEPRECATED */
@@ -161,26 +184,26 @@ if($output->type == OUTPUT_ERRORDOCUMENT) {
 switch($output->type) {
 	case(OUTPUT_TEMPLATE):
 
-		if(UseHTMLCompiler) {
-			include(RnrDir.'templatecompiler.php');
-			new Template($output->template);
+		$Runner->view->SCRIPT_TIME = (string)$GlobalTime;
+
+		if(method_exists($Runner, 'Template') && (!$output->data1)) $output = call_user_func_array([$Runner, 'Template'], [$output->template]);
+		else {
+
+			$v = $view = $Runner->view->GetAssigned();
+
+			ob_start();
+
+			if(file_exists(TemplateOutput.$output->template.'.php')) include(TemplateOutput.$output->template.'.php');
+			else trigger_error('Runner/Ouput Error: template &quot;'.$output->template.'&quot; not found', E_USER_ERROR);
+
+			$output = ob_get_clean();
 		}
+
 		$Runner->view->SendHeaders();
-		$v = $view = $Runner->view->GetAssigned();
-		$v->SCRIPT_TIME = (string)$GlobalTime;
-
-		ob_start();
-
-		if(file_exists(TemplateOutput.$output->template.'.php')) include(TemplateOutput.$output->template.'.php');
-	        elseif(file_exists(TemplateOutputCommon.$output->template.'.php')) include(TemplateOutputCommon.$output->template.'.php');
-		else trigger_error('Runner/Ouput Error: template &quot;'.$output->template.'&quot; not found', E_USER_ERROR);
-
-		$output = ob_get_clean();
+		echo($output);
 
 		if(method_exists($Runner, 'AfterRender')) call_user_func_array([$Runner, 'AfterRender'], Inject($Runner, 'AfterRender', []));
 		if(method_exists($Runner, 'OutputProcessing')) $output = call_user_func_array([$Runner, 'OutputProcessing'], Inject($Runner, 'OutputProcessing', $output));
-
-		echo($output);
 
 	break;
 

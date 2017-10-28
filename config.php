@@ -11,9 +11,9 @@ define('TemplateSource', AppDir.'html/');
 define('TemplateOutput', AppDir.'template/');
 
 /* default */
-define('defaultModule', 'main');
-define('defaultAction', 'index');
-define('defaultGlobalAction', 'index');
+define('defaultModule', 'application');
+define('defaultAction', 'main');
+define('defaultGlobalAction', 'main');
 
 define('Base', 'http://'.$_SERVER['SERVER_NAME']);
 define('BaseStatic', Base);
@@ -28,18 +28,19 @@ define('UseHTMLCompiler', false);
 define('AdvLog', false);
 define('StreamAsParameter', true);      // deprecated candidate
 define('ErrorEnableSource', true);
+define('NoClassAs404', false);
 /*
 define('ErrorEmail', 'email@domain.tld');
 */
 
 /* PDO MYSQL */
-
+/*
 define('DB_host', '');
 define('DB_name', '');
 define('DB_user', '');
 define('DB_password', '');
 define('DB_DEBUGMODE', false);
-
+*/
 
 /* URL */
 define('ParamModule', 'mod');

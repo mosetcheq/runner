@@ -24,6 +24,8 @@ RTR_API_MODE		nazvoslovi metod v modu pro API - on<http_method>method_name
 
 $routes = [
 
+// converts path to /{module}/{action}/{...parameters}
+/*
 	[
 		'route' => [
 			[null, RTR_OPTIONAL],
@@ -32,4 +34,5 @@ $routes = [
 		'action' => ['*', '*'],
 		'flags' => RTR_NOCHECKSIZE | RTR_ADDPARAMS,
 	],
+*/
 ];
