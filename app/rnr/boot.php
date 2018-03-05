@@ -118,7 +118,7 @@ if(file_exists(RnrDir.'routes.php')) {
 	$runnerAction = new Rnr\RouterStatus($_GET[ParamModule] ? $_GET[ParamModule] : defaultModule, $_GET[ParamAction], RTR_OK, $params);
 }
 
-if(!$runnerAction->method) $runnerAction->method = defaultGlobalAction;
+if(!$runnerAction->method) $runnerAction->method = defaultGlobalAction.actionPostfix;
 
 $Runner = new $runnerAction->className;
 

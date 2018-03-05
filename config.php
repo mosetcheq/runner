@@ -14,6 +14,7 @@ define('TemplateOutput', AppDir.'template/');
 define('defaultModule', 'application');
 define('defaultAction', 'main');
 define('defaultGlobalAction', 'main');
+define('actionPostfix', '');
 
 define('Base', 'http://'.$_SERVER['SERVER_NAME']);
 define('BaseStatic', Base);

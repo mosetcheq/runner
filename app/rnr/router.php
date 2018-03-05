@@ -82,12 +82,12 @@ function Router($routes, $request, $defaults = null) {
 					if($route['flags'] & RTR_API_MODE) $method = 'on'.ucfirst(strtolower($_SERVER['REQUEST_METHOD'])).ucfirst($method);
 					if(($route['flags'] & RTR_ADDPARAMS) && (count($worker) > 0)) $params = array_merge($params, $worker);
                                         if(($route['flags'] & RTR_ADDPARAMSARRAY) && (count($worker) > 0)) $params = array($worker);
-                                        $output = new RouterStatus($class, $method, RTR_OK, $params);
+                                        $output = new RouterStatus($class, $method.actionPostfix, RTR_OK, $params);
 					if(!($route['flags'] & RTR_CONTINUE)) $exit = true;
 				}
 			}
-			if(!$output) $output = new RouterStatus($defaults->className, $defaults->method, RTR_NOTFOUND, $request);
+			if(!$output) $output = new RouterStatus($defaults->className, $defaults->method.actionPostfix, RTR_NOTFOUND, $request);
 		return $output;
-		} else return new RouterStatus($defaults->className, $defaults->method, RTR_NONE);
+		} else return new RouterStatus($defaults->className, $defaults->method.actionPostfix, RTR_NONE);
 	} else return false;
 }
