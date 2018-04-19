@@ -34,6 +34,21 @@ class DBStatement {
 
 }
 
+class DBFunction {
+	private $value;
+	private $equal;
+	public function __construct($val, $equal = '=') {
+		$this->value = $val;
+		$this->equal = $equal;
+	}
+	public function GetInsert() {
+		return $this->value;
+	}
+	public function GetUpdate() {
+		return $this->equal.' '.$this->value;
+	}
+}
+
 
 class DB {
 
@@ -58,6 +73,10 @@ class DB {
 		return @self::$PDO->getAttribute(constant('PDO::ATTR_'.$atr));
 	}
 
+
+	public static function Func($val) {
+		return new DBFunction($val);
+	}
 
 	private static function Q($query) {
 		if(DB_DEBUGMODE) Log::Write($query); $start = microtime(true);
@@ -154,6 +173,7 @@ class DB {
 
        	public static function FetchDataRow($tablename, $where = null) {
 		if(self::$Prefix) $tablename = self::$Prefix.'_'.$tablename;
+		$where = self::createWhere($where);
 		return self::$PDO->query('SELECT * FROM '.$tablename.($where ? ' WHERE '.$where : '').' LIMIT 1;')->FetchObject();
 	}
 
@@ -177,6 +197,7 @@ class DB {
 		if(is_array($data)) $fields = self::createUpdateData($data);
 			else $fields = $data;
 */
+/*
 		if(is_array($where)) {
 			$wh = [];
 			foreach($where as $column => $value)
@@ -184,6 +205,8 @@ class DB {
 					else $wh[] = $column.' = \''.$value.'\'';
 			$where = implode(' AND ', $wh);
 		}
+*/
+		$where = self::createWhere($where);
 		if(is_array($data)) {
 			$data = self::createUpdateData($data);
 //		return self::Exec("UPDATE {$tablename} SET {$fields}".($where ? ' WHERE '.$where : '').';');
@@ -215,7 +238,7 @@ class DB {
 
 	public static function Delete($tablename, $where, $limit = null) {
 		if(self::$Prefix) $tablename = self::$Prefix.'_'.$tablename;
-
+		$where = self::createWhere($where);
 		return self::Exec('DELETE FROM '.$tablename.($where ? ' WHERE '.$where : '').($limit ? ' LIMIT '.$limit : '').';');
 	}
 
@@ -223,8 +246,20 @@ class DB {
 		if(is_array($where)) {
 			$wh = [];
 			foreach($where as $column => $value)
-				if(gettype($value) == 'NULL') $wh[] = $column.' IS NULL';
-					else $wh[] = $column.' = \''.$value.'\'';
+				switch(gettype($value)) {
+					case('NULL'):
+						$wh[] = $column.' IS NULL';
+						break;
+					case('array'):
+						$wh[] = $column.' IN (\''.implode('\',\'', $value).'\')';
+						break;
+					case('object'):
+						if(get_class($value) == 'Rnr\DBFunction') $column.$value->Get();
+						break;
+					default:
+						$wh[] = $column.' = \''.$value.'\'';
+						break;
+				}
 			$where = implode(' AND ', $wh);
 		}
 		return $where;
@@ -236,14 +271,23 @@ class DB {
 		$data_pass = array();
 		foreach($data as $key => $value) {
 			switch(gettype($value)) {
-				case('NULL'): $value = 'NULL'; break;
-				case('array'): $value = implode(',', $value); break;
-				default: if($value[0] == '$') $value = substr($value,1);
+				case('NULL'):
+					$value = 'NULL';
+					break;
+				case('array'):
+					$value = implode(',', $value);
+					break;
+				case('object'):
+					if(get_class($value) == 'Rnr\DBFunction') $value = $value->GetInsert();
 					else {
-						$data_pass['i_'.$key] = $value;
+						$data_pass['i_'.$key] = serialize($value);
 						$value = ":i_{$key}";
-						}
-				break;
+					}
+					break;
+				default:
+					$data_pass['i_'.$key] = $value;
+					$value = ":i_{$key}";
+					break;
 			}
 			$data[$key] = $value;
 		}
@@ -257,14 +301,23 @@ class DB {
         	$data_pass = array();
 		foreach($data as $key => $value) {
 			switch(gettype($value)) {
-				case('NULL'): $value = 'NULL'; break;
-				case('array'): $value = implode(',', $value); break;
-				default: if($value[0] == '$') $value = substr($value,1);
+				case('NULL'):
+					$value = 'NULL';
+					break;
+				case('array'):
+					$value = implode(',', $value);
+					break;
+				case('object'): if(get_class($value) == 'Rnr\DBFunction') $value = $value->GetUpdate();
 					else {
-                                                $data_pass['u_'.$key] = $value;
-                                                $value = ":u_{$key}";
-						}
-				break;
+						$data_pass['u_'.$key] = serialize($value);
+						$value = ":u_{$key}";
+					}
+					break;
+				default:
+					$data_pass['u_'.$key] = $value;
+					$value = ":u_{$key}";
+					break;
+
 			}
 			$tmp[] = "{$key} = {$value}";
 		}
