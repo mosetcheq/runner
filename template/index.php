@@ -12,8 +12,16 @@
 </head>
 <body>
 
-<h1><?=$view->heading;?></h1>
+<h1>Welcome to Runner framework Sandbox!</h1>
 <p><?=$view->paragraph;?></p>
+
+<h2>Submit form ...</h2>
+<p>Submiting form calls method &quot;onMyformSubmit&quot; ...</p>
+<form method="post">
+  <?=Rnr\FormHandler::Sender('myform');?>
+  <input type="text" name="name" placeholder="place name here">
+  <input type="submit" value="submit">
+</form>
 
 </body>
 </html>

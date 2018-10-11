@@ -4,6 +4,7 @@ date_default_timezone_set('Europe/Prague');
 
 /* filesystem */
 define('AppDir', $_SERVER['DOCUMENT_ROOT'].'/');
+define('ConfDir', AppDir.'conf/');
 define('AppClassDir', AppDir.'app/');
 define('RnrDir', AppClassDir.'rnr/');
 
@@ -16,7 +17,7 @@ define('defaultAction', 'main');
 define('defaultGlobalAction', 'main');
 define('actionPostfix', '');
 
-define('Base', 'http://'.$_SERVER['SERVER_NAME']);
+define('Base', 'http'.($_SERVER['HTTP_HTTPS'] ? 's' : '').'://'.$_SERVER['SERVER_NAME']);
 define('BaseStatic', Base);
 
 /* Runner specific */
@@ -25,9 +26,7 @@ define('formIdentificator', 'formID');
 define('rewriteVariable', 'rewrite');
 define('DisableWarnings', false);
 define('ErrorDocumentName', 'e');
-define('UseHTMLCompiler', false);
 define('AdvLog', false);
-define('StreamAsParameter', true);      // deprecated candidate
 define('ErrorEnableSource', true);
 define('NoClassAs404', false);
 /*

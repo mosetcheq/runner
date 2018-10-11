@@ -10,4 +10,7 @@ class Application extends Rnr {
 		return Template('index');
 	}
 
+	public function onMyformSubmit($formdata) {
+		return JSON($formdata->GetAll());
+	}
 }

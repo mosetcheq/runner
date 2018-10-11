@@ -2,7 +2,8 @@
 
 use Rnr\DB,
     Rnr\Output,
-    Rnr\Session;
+    Rnr\Session,
+    Rnr\FormHandler;
 
 abstract class Rnr {
 
@@ -13,11 +14,17 @@ abstract class Rnr {
 		}
 
 		$this->view = new Output();
-		$this->session = new Session();
-
+		$this->session = new Session('s');
 	}
 
-/**
+	
+	public function onLoad() {
+		$form = new FormHandler;
+		return $form->CallHandler($this);
+	}
+
+
+	/**
  * User defined template engine
  */
 /*

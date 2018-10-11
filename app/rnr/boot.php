@@ -108,8 +108,8 @@ header('Expires: 0');
 $GlobalTime = new StopWatch();
 if(AdvLog) Log::Write(' *** Starting session *** ');
 
-if(file_exists(RnrDir.'routes.php')) {
-	require(RnrDir.'routes.php');
+if(file_exists(ConfDir.'routes.php')) {
+	require(ConfDir.'routes.php');
 	define('URLModeRouter', true);
 	$runnerAction = Rnr\Router($routes, $_GET[rewriteVariable], new Rnr\RouterStatus(defaultModule, defaultAction));
 } else {
@@ -126,6 +126,7 @@ if(!$output) $output = new OutputType(null, null, null);
 if(method_exists($Runner, 'onLoad')) $output = call_user_func_array([$Runner, 'onLoad'], Inject($Runner, 'onLoad', []));
 
 /* Pridavani parametru podle POST dat - Kandidat na DEPRECATED */
+/*
 if(($_SERVER['REQUEST_METHOD'] == 'POST') && StreamAsParameter){
 	switch($_SERVER['CONTENT_TYPE']) {
 		case('application/json'):
@@ -138,6 +139,7 @@ if(($_SERVER['REQUEST_METHOD'] == 'POST') && StreamAsParameter){
 }
 
 /* osetreni POST metody - Kandidát na DEPRECATED */
+/*
 if(count($_POST) > 0) {
 	$postData = $_POST;
 	if($_POST[formIdentificator]) {
@@ -149,8 +151,9 @@ if(count($_POST) > 0) {
 	if(method_exists($Runner, $method_name)) $output = call_user_func_array([$Runner, $method_name], Inject($Runner, $method_name, $postData));
 		elseif(!DisableWarnings) trigger_error("Runner WARNING: Unhandled '{$method_name}/POST' event", E_USER_ERROR);
 }
-
+*/
 /* osetreni formulare z GET - Kandidát na DEPRECATED */
+/*
 if($_GET[formIdentificator]) {
 	$getData = $_GET;
 	$method_name = 'on'.$_GET[formIdentificator].'Submit';
@@ -159,7 +162,7 @@ if($_GET[formIdentificator]) {
 	if(method_exists($Runner, $method_name)) $output = call_user_func_array([$Runner, $method_name], Inject($Runner, $method_name, $getData));
 		elseif(!DisableWarnings) trigger_error("Runner WARNING: Unhandled '{$method_name}/GET' event", E_USER_ERROR);
 }
-
+*/
 
 if($output->type == null) {
 	if(method_exists($Runner, $runnerAction->method)) $output = call_user_func_array([$Runner, $runnerAction->method], Inject($Runner, $runnerAction->method, $runnerAction->params));
