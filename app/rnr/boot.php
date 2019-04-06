@@ -10,7 +10,7 @@ function autoloader($className) {
 		} else {
 			$info = debug_backtrace();
 			while(!$info[0]['line']) array_shift($info);
-			Rnr\ErrorHandling::Critical(E_ERROR, "Runner Error: Class '{$className}' (".AppClassDir.$className.".php) not found", $info[0]['file'], $info[0]['line'], $info[0]['args']);
+			Rnr\ErrorHandling::Critical(E_ERROR, "Runner Error: Class '{$className}' (".AppClassDir.$classFileName.".php) not found", $info[0]['file'], $info[0]['line'], $info[0]['args']);
 		}
 	}
 }
@@ -25,7 +25,7 @@ define('OUTPUT_PREVIOUS', 32);
 define('OUTPUT_PLAIN', 64);
 define('OUTPUT_FILE', 128);
 
-class OutputType {
+class Response {
 	public $type;
 	public $template;
 	public $data1;
@@ -41,31 +41,31 @@ class OutputType {
 
 
 function Template($filename) {
-	return new OutputType(OUTPUT_TEMPLATE, $filename, null, null);
+	return new Response(OUTPUT_TEMPLATE, $filename, null, null);
 }
 
 function Plain($text, $contentType = 'text/plain', $charset = 'utf-8') {
-	return new OutputType(OUTPUT_PLAIN, $text, $contentType, $charset);
+	return new Response(OUTPUT_PLAIN, $text, $contentType, $charset);
 }
 
 function ErrorDocument($error, $usertemplate = null) {
-	return new OutputType(OUTPUT_ERRORDOCUMENT, $usertemplate, $error, null);
+	return new Response(OUTPUT_ERRORDOCUMENT, $usertemplate, $error, null);
 }
 
 function Redirect($url, $code = null) {
-	return new OutputType(OUTPUT_REDIRECT, null, $url, $code);
+	return new Response(OUTPUT_REDIRECT, null, $url, $code);
 }
 
-function JSON($data) {
-	return new OutputType(OUTPUT_JSON, null, $data, null);
+function JSON($data, $code) {
+	return new Response(OUTPUT_JSON, null, $data, $code);
 }
 
 function Previous() {
-	return new OutputType(OUTPUT_PREVIOUS, null, null, null);
+	return new Response(OUTPUT_PREVIOUS, null, null, null);
 }
 
 function FileContent($source, $content = null, $filename = null) {
-	return new OutputType(OUTPUT_FILE, $source, $content, $filename);
+	return new Response(OUTPUT_FILE, $source, $content, $filename);
 }
 /* output types - end */
 
@@ -122,7 +122,7 @@ if(!$runnerAction->method) $runnerAction->method = defaultGlobalAction.actionPos
 
 $Runner = new $runnerAction->className;
 
-if(!$output) $output = new OutputType(null, null, null);
+if(!$output) $output = new Response(null, null, null);
 if(method_exists($Runner, 'onLoad')) $output = call_user_func_array([$Runner, 'onLoad'], Inject($Runner, 'onLoad', []));
 
 /* Pridavani parametru podle POST dat - Kandidat na DEPRECATED */
@@ -166,6 +166,7 @@ if($_GET[formIdentificator]) {
 
 if($output->type == null) {
 	if(method_exists($Runner, $runnerAction->method)) $output = call_user_func_array([$Runner, $runnerAction->method], Inject($Runner, $runnerAction->method, $runnerAction->params));
+	elseif(method_exists($Runner, '__missing')) $output = call_user_func_array([$Runner, '__missing'], [$runnerAction->method]);
 	elseif(!DisableWarnings) trigger_error("Runner ERROR: Unhandled '{$runnerAction->method}' action in '{$runnerAction->className}' class", E_USER_ERROR);
 }
 
@@ -216,7 +217,8 @@ switch($output->type) {
 	break;
 
 	case(OUTPUT_JSON):
-       		header('Content-type: application/json');
+		if($output->data2) header('HTTP/'.$message);
+       	header('Content-type: application/json');
 		echo(json_encode($output->data1));
 		exit();
 	break;
