@@ -56,7 +56,7 @@ function Redirect($url, $code = null) {
 	return new Response(OUTPUT_REDIRECT, null, $url, $code);
 }
 
-function JSON($data, $code) {
+function JSON($data, $code = null) {
 	return new Response(OUTPUT_JSON, null, $data, $code);
 }
 
