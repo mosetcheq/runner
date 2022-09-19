@@ -1,5 +1,6 @@
 <?php
 namespace Rnr;
+use Rnr\Input;
 
 class ErrorHandling {
 
@@ -25,13 +26,10 @@ class ErrorHandling {
 	public static function ShutDown() {
 		$halt_on = E_ERROR | E_PARSE | E_USER_ERROR | E_WARNING;
 		$error = error_get_last();
-		if($error == null) $error = ['type' => 0];
-		if((count(self::$runtimeErrors) > 0) || ($error['type'] & $halt_on))  {
-/*
+		if((count(self::$runtimeErrors) > 0) || (($error['type'] ?? 0) & $halt_on))  {
 			if($error['type'] & $halt_on) $error_r = array_values($error);
 				else $error = array_pop(self::$runtimeErrors);
-*/
-				if($error['type'] & $halt_on) self::Critical($error['type'], $error['message'], $error['file'], $error['line']);
+			if($error['type'] & $halt_on) self::Critical($error['type'], $error['message'], $error['file'], $error['line']);
 				else self::RuntimeReport();
 		}
 	}
@@ -43,7 +41,6 @@ class ErrorHandling {
 			'file' => $err_file,
 			'line' => $err_line
 		];
-		// print_r(self::$runtimeErrors);
 		if($err_no != E_USER_ERROR) return true;
 			else return false;
 	}
@@ -76,7 +73,7 @@ class ErrorHandling {
 			);
 			$replaces = array(
 				'<span class="keyw">$1</span>$2',
-                                '<span class="type">$1</span>$2',
+                '<span class="type">$1</span>$2',
 				'<span class="var">$1</span>',
 				'<span class="str">$1</span>',
 				'<span class="str">$1</span>'
@@ -91,10 +88,8 @@ class ErrorHandling {
 		if(Input::IsAjax()) {
 			header('Content-type: application/json');
 			echo(JSON_encode([
+				'TYPE' => 'Critical',
 				'SERVER' => $_SERVER,
-				'POST' => $_POST,
-				'GET' => $_GET,
-				'JSON_BODY' => (isset($_SERVER['CONTENT_TYPE']) && ($_SERVER['CONTENT_TYPE'] == 'application/json') ? JSON_decode(file_get_contents('php://input')) : null),
 				'ERROR' => $err_str,
 				'FILE' => $err_file,
 				'LINE' => $err_line,
@@ -137,14 +132,14 @@ class ErrorHandling {
 
 			$patterns = array(
 				'/(abstract|and|array|break|callable|case|catch|class|clone|const|continue|declare|default|die|do|echo|else|elseif|empty|enddeclare|endfor|endforeach|endif|endswitch|endwhile|eval|exit|extends|final|finally|for|foreach|function|global|goto|if|implements|include|include_once|instanceof|insteadof|interface|isset|list|namespace|new|or|print|private|protected|public|require|require_once|return|static|switch|throw|trait|try|unset|use|var|while|xor|yeld)(\W)/i',
-                '/(null|bool|boolean|int|integer|float|decimal|str|string|object|resource|true|false)(\W)/i',
+                                '/(null|bool|boolean|int|integer|float|decimal|str|string|object|resource|true|false)(\W)/i',
 				'/(\$(\w|\d|_)*)/',
 				'/(\'[^\']*\')/',
 				'/(&quot;[^\']*&quot;)/'
 			);
 			$replaces = array(
 				'<span class="keyw">$1</span>$2',
-                '<span class="type">$1</span>$2',
+                                '<span class="type">$1</span>$2',
 				'<span class="var">$1</span>',
 				'<span class="str">$1</span>',
 				'<span class="str">$1</span>'
@@ -159,10 +154,8 @@ class ErrorHandling {
 		if(Input::IsAjax()) {
 			header('Content-type: application/json');
 			echo(JSON_encode([
+				'TYPE' => 'SQL',
 				'SERVER' => $_SERVER,
-				'POST' => $_POST,
-				'GET' => $_GET,
-				'JSON_BODY' => (isset($_SERVER['CONTENT_TYPE']) && ($_SERVER['CONTENT_TYPE'] == 'application/json') ? JSON_decode(file_get_contents('php://input')) : null),
 				'ERROR' => $info[2],
 				'QUERY' => $query,
 				'PDO_info' => $info
@@ -181,11 +174,11 @@ class ErrorHandling {
 		if(Input::IsAjax()) {
 			header('Content-type: application/json');
 			echo(JSON_encode([
+				'TYPE' => 'Runtime',
 				'SERVER' => $_SERVER,
-				'POST' => $_POST,
-				'GET' => $_GET,
-				'JSON_BODY' => (isset($_SERVER['CONTENT_TYPE']) && ($_SERVER['CONTENT_TYPE'] == 'application/json') ? JSON_decode(file_get_contents('php://input')) : null),
-				'RUNTIME_ERRORS' => $errors
+				'ERROR' => $info[2],
+				'QUERY' => '',
+				'PDO_info' => $info
 			]));
 			exit;
 			}
@@ -195,7 +188,7 @@ class ErrorHandling {
 	}
 
 	public static function IsErrors() {
-		return(count(self::$runtimeErrors) > 0);
+		return(count(self::$runtimeErros) > 0);
 	}
 
 
@@ -208,5 +201,4 @@ class ErrorHandling {
 
 
 set_error_handler('Rnr\ErrorHandling::Runtime', E_ALL ^ E_NOTICE);
-// set_error_handler('Rnr\ErrorHandling::Runtime', E_ALL);
 register_shutdown_function('Rnr\ErrorHandling::Shutdown');

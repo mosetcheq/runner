@@ -7,8 +7,8 @@
  <meta name="viewport" content="width=device-width" />
 
  <title><?=$view->pagetitle;?></title>
- <meta name="description" content="<?=$view->description;?>" />
- <meta name="keywords" content="<?=$view->keywords;?>" />
+ <meta name="description" content="<?=$view->description ?? '';?>" />
+ <meta name="keywords" content="<?=$view->keywords ?? '';?>" />
 </head>
 <body>
 

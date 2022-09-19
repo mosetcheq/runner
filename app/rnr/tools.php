@@ -31,13 +31,13 @@ class Log {
 class Conv {
 
 	public static function IntValue($str) {
-		preg_match('/\d+/', $str, $match);
-		return $match[0];
+		preg_match('/\d+/', $str ?? '', $match);
+		return (!empty($match) ? $match[0] : null);
 	}
 
 	public static function DecimalValue($str) {
-		preg_match('/(\d|\.|,)+/', $str, $match);
-		if($match[0]) {
+		preg_match('/(\d|\.|,)+/', $str ?? '', $match);
+		if(!empty($match)) {
 			$out = str_replace(',', '.', $match[0]);
 			return $out;
 		} else return false;

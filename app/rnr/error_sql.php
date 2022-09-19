@@ -2,7 +2,7 @@
 <html lang="cz">
 <head>
 <meta charset="utf-8">
-<title><?=$err_str;?> @ <?=$err_file;?></title>
+<title><?=$err_str ?? 'Unknown error';?> @ <?=$err_file;?></title>
 <style>
 body {
 	margin: 0px;
@@ -70,7 +70,7 @@ h1 {
 <?php if($query) { ?>
 <p>Query: <strong><?=htmlspecialchars($query);?></strong></p>
 <?php } } ?>
-<p><strong>DT:</strong><?=date('Y-m-d H:i:s', time());?> <strong>IP:</strong><?=$_SERVER['REMOTE_ADDR'];?><?=($_SERVER['HTTP_REFERER'] ? ' <strong>Referer:</strong>'.$_SERVER['HTTP_REFERER']:'');?></p>
+<p><strong>DT:</strong><?=date('Y-m-d H:i:s', time());?> <strong>IP:</strong><?=$_SERVER['REMOTE_ADDR'];?><?=(isset($_SERVER['HTTP_REFERER']) ? ' <strong>Referer:</strong>'.$_SERVER['HTTP_REFERER']:'');?></p>
 </header>
 <?php if($err_file) { ?>
 <dl>

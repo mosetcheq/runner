@@ -7,9 +7,11 @@ define('AppDir', $_SERVER['DOCUMENT_ROOT'].'/');
 define('ConfDir', AppDir.'conf/');
 define('AppClassDir', AppDir.'app/');
 define('RnrDir', AppClassDir.'rnr/');
+define('PSR4', AppDir.'vendor/composer/autoload_psr4.php');
 
 define('TemplateSource', AppDir.'html/');
 define('TemplateOutput', AppDir.'template/');
+define('UseHTMLCompiler', false);
 
 /* default */
 define('defaultModule', 'application');
@@ -17,7 +19,7 @@ define('defaultAction', 'main');
 define('defaultGlobalAction', 'main');
 define('actionPostfix', '');
 
-define('Base', 'http'.($_SERVER['HTTP_HTTPS'] ? 's' : '').'://'.$_SERVER['SERVER_NAME']);
+define('Base', 'http'.(isset($_SERVER['HTTP_HTTPS']) ? 's' : '').'://'.$_SERVER['SERVER_NAME']);
 define('BaseStatic', Base);
 
 /* Runner specific */
@@ -26,7 +28,7 @@ define('formIdentificator', 'formID');
 define('rewriteVariable', 'rewrite');
 define('DisableWarnings', false);
 define('ErrorDocumentName', 'e');
-define('AdvLog', false);
+define('AdvLog', true);
 define('ErrorEnableSource', true);
 define('NoClassAs404', false);
 /*

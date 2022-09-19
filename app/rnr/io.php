@@ -1,20 +1,26 @@
 <?php
 namespace Rnr;
 
-if (!function_exists('getallheaders'))
-{
-    function getallheaders()
-    {
-       $headers = array ();
-       foreach ($_SERVER as $name => $value)
-       {
-           if (substr($name, 0, 5) == 'HTTP_')
-           {
-               $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
-           }
-       }
-       return $headers;
-    }
+define('OUTPUT_TEMPLATE', 1);
+define('OUTPUT_ERRORDOCUMENT', 2);
+define('OUTPUT_REDIRECT', 4);
+define('OUTPUT_JSON', 8);
+define('OUTPUT_PREVIOUS', 32);
+define('OUTPUT_PLAIN', 64);
+define('OUTPUT_FILE', 128);
+
+class OutputType {
+	public $type;
+	public $template;
+	public $data1;
+	public $data2;
+
+	public function __construct($type, $template, $data1 = null, $data2 = null) {
+		$this->type = $type;
+		$this->template = $template;
+		$this->data1 = $data1;
+		$this->data2 = $data2;
+	}
 }
 
 class Output {
@@ -53,14 +59,13 @@ class Output {
                 415 => '1.0 415 Unsuported Media Type',
                 416 => '1.0 416 Requested Range Not Satisfiable',
                 417 => '1.0 417 Expectation Failed',
-		500 => '1.0 500 Internal Server Error'
 		);
 
 	public $contentType;
 	public $charset;
 	public $headers = array();
 
-	private $assigned = [];
+	private $assigned = null;
 
 	public function __construct($content = 'text/html', $charset = 'utf-8') {
 		$this->contentType = $content;
@@ -97,7 +102,7 @@ class Output {
 		ob_start();
 		if($data) $v = $view = (object)$data; else $v = $view = (object)$this->assigned;
 		if(file_exists(TemplateOutput.$source.'.php')) include(TemplateOutput.$source.'.php');
-//		elseif(file_exists(TemplateOutputCommon.$source.'.php')) include(TemplateOutputCommon.$source.'.php');
+		elseif(file_exists(TemplateOutputCommon.$source.'.php')) include(TemplateOutputCommon.$source.'.php');
 		elseif(file_exists("html/{$source}.html")) include("html/{$source}.html");
 		return ob_get_clean();
 	}
@@ -139,30 +144,32 @@ class Input {
 
 
 	public static function IsAJAX() {
-		return (((!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && (strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')) || ($_GET[AjaxFlag]) || ($_POST[AjaxFlag])));
+		return (((!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && (strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')) || isset($_GET[AjaxFlag]) || isset($_POST[AjaxFlag])));
 	}
 
 
 	public static function Post($varname) {
-		return $_POST[$varname];
+		return isset($_POST[$varname]) ? $_POST[$varname] : null;
 	}
 
 	public static function Files($varname) {
-		return $_FILES[$varname];
+		return isset($_FILES[$varname]) ? $_FILES[$varname] : null;
 	}
 
 	public static function Get($varname) {
-		return $_GET[$varname];
+		return isset($_GET[$varname]) ? $_GET[$varname] : null;
 	}
 
 
 	public static function Cookie($varname) {
-		return $_COOKIE[$varname];
+		return isset($_COOKIE[$varname]) ? $_COOKIE[$varname] : null;
 	}
 
 
 	public static function IsSubmited($formID) {
-		if(($_POST[formIdentificator] == $formID) || ($_GET[formIdentificator] == $formID)) return true;
+		$_post_form_id = $_POST[formIdentificator] ?? '';
+		$_get_form_id = $_GET[formIdentificator] ?? '';
+		if(($_post_form_id == $formID) || ($_get_form_id == $formID)) return true;
 			else return false;
 	}
 
@@ -189,7 +196,7 @@ class Input {
 
 
 	public static function Referer() {
-		return $_SERVER['HTTP_REFERER'];
+		return $_SERVER['HTTP_REFERER'] ?? '';
 	}
 
 
@@ -202,15 +209,18 @@ class Input {
 class Request {
 	public function __construct() {
 		$this->method = $_SERVER['REQUEST_METHOD'];
-		$this->isAjax = (((!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && (strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')) || ($_GET[AjaxFlag]) || ($_POST[AjaxFlag])));
+		$this->isAjax = (((!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && (strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')) || isset($_GET[AjaxFlag]) || isset($_POST[AjaxFlag])));
 		$this->post = (object)$_POST;
 		$this->get = (object)$_GET;
 		$this->cookie = (object)$_COOKIE;
-		$this->contentType = $_SERVER['CONTENT_TYPE'];
+		$this->content_type = $_SERVER['CONTENT_TYPE'] ?? null;
 		$this->body = file_get_contents('php://input');
 		$this->referer = $_SERVER['HTTP_REFERER'];
-		$this->uri = $_SERVER['REQUEST_URI'];
-		$this->headers = (object)getallheaders();
+		$this->headers = new \stdClass;
+		foreach(getallheaders() as $name => $value) {
+			$name = strtoupper(str_replace('-', '_', $name));
+			$this->headers->$name = $value;
+		}
 		switch($this->content_type) {
 			case('application/json'):
 				$this->data = JSON_decode($this->body);
@@ -222,9 +232,6 @@ class Request {
 				parse_str($this->body, $this->data);
 				break;
 		}
-	}
-	public function isMethod($method) {
-		return strtolower($this->method) == strtolower(trim($method));
 	}
 }
 
@@ -253,7 +260,7 @@ class Session {
 
 	public function __construct($ses_id = null) {
 		if($ses_id) session_name($ses_id);
-		session_start();
+		if(session_status() === PHP_SESSION_NONE) session_start();
 	}
 
 	public function __set($name, $val) {
@@ -262,7 +269,7 @@ class Session {
 
 
 	public function __get($name) {
-		return $_SESSION[$name];
+		return $_SESSION[$name] ?? null;
 	}
 
 
@@ -297,35 +304,38 @@ class UploadedFileIterator implements \Iterator {
 	private $pointer;
 
 	public function __construct($prefix) {
-		if(is_array($_FILES[$prefix]['name'])) {
-			foreach($_FILES[$prefix]['name'] as $fkey => $name) {
-				$this->files[$fkey] = new UploadedFile();
-				foreach(array_keys($_FILES[$prefix]) as $akey) $this->files[$fkey]->$akey = $_FILES[$prefix][$akey][$fkey];
+		if(isset($_FILES[$prefix])) {
+
+			if(is_array($_FILES[$prefix]['name'])) {
+				foreach($_FILES[$prefix]['name'] as $fkey => $name) {
+					$this->files[$fkey] = new UploadedFile();
+					foreach(array_keys($_FILES[$prefix]) as $akey) $this->files[$fkey]->$akey = $_FILES[$prefix][$akey][$fkey];
+				}
+			} else {
+				$this->files[0] = new UploadedFile($_FILES[$prefix]);
 			}
-		} else {
-			$this->files[0] = new UploadedFile($_FILES[$prefix]);
 		}
 
 		$this->pointer = 0;
 	}
 
-	function rewind() {
+	function rewind(): void {
 		$this->pointer = 0;
 	}
 
-	function current() {
+	function current(): UploadedFile {
 		return $this->files[$this->pointer];
 	}
 
-	function key() {
+	function key(): mixed {
 		return $this->pointer;
 	}
 
-	function next() {
+	function next(): void {
 		++$this->pointer;
 	}
 
-	function valid() {
+	function valid(): bool {
 		return isset($this->files[$this->pointer]);
 	}
 }

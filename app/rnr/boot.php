@@ -1,44 +1,36 @@
 <?php namespace {
 /* autoloader handler */
 function autoloader($className) {
-	$classFileName = str_replace('\\', '/', strtolower($className));
-	if(file_exists(AppClassDir.$classFileName.'.php')) require_once(AppClassDir.$classFileName.'.php');
-	else {
-		if(NoClassAs404) {
-			if(!class_exists('Rnr\ErrorDocument')) require_once(RnrDir.'errordocument.php');
-			class_alias('Rnr\ErrorDocument', $className);
-		} else {
-			$info = debug_backtrace();
-			while(!$info[0]['line']) array_shift($info);
-			Rnr\ErrorHandling::Critical(E_ERROR, "Runner Error: Class '{$className}' (".AppClassDir.$classFileName.".php) not found", $info[0]['file'], $info[0]['line'], $info[0]['args']);
+	if(defined('PSR4'))
+	{
+		$file = preg_replace($GLOBALS['PSR4_Regex'][0], $GLOBALS['PSR4_Regex'][1], $className);
+
+		if($file == $className)
+		{
+			$classFileName = AppClassDir . str_replace('\\', '/', strtolower($className));
 		}
+		else {
+			$classFileName = $file;
+		}
+
+		$classFileName.= '.php';
 	}
+	
+	if(AdvLog) Rnr\Log::Write('Loading ' . $className . ' (' . $classFileName . ')');
+	if(file_exists($classFileName)) require_once($classFileName);
+	else {
+/*
+		require_once(RnrDir.'errordocument.php');
+		class_alias('Rnr\ErrorDocument', $className);
+*/
+		$info = debug_backtrace();
+		while(isset($info[0]['line'])) array_shift($info);
+		Rnr\ErrorHandling::Critical(E_ERROR, "Runner Error: Class '{$className}' ({$classFileName}) not found", $info[0]['file'] ?? '', $info[0]['line'] ?? '', $info[0]['args'] ?? '');
+	}
+
 }
 
 /* output types - start */
-
-define('OUTPUT_TEMPLATE', 1);
-define('OUTPUT_ERRORDOCUMENT', 2);
-define('OUTPUT_REDIRECT', 4);
-define('OUTPUT_JSON', 8);
-define('OUTPUT_PREVIOUS', 32);
-define('OUTPUT_PLAIN', 64);
-define('OUTPUT_FILE', 128);
-
-class Response {
-	public $type;
-	public $template;
-	public $data1;
-	public $data2;
-
-	public function __construct($type, $template, $data1 = null, $data2 = null) {
-		$this->type = $type;
-		$this->template = $template;
-		$this->data1 = $data1;
-		$this->data2 = $data2;
-	}
-}
-
 
 function Template($filename) {
 	return new Response(OUTPUT_TEMPLATE, $filename, null, null);
@@ -69,32 +61,31 @@ function FileContent($source, $content = null, $filename = null) {
 }
 /* output types - end */
 
-/* injector */
-function Inject($class, $method, $arguments) {
-	try {
-		$r = new ReflectionMethod($class, $method);
-	} catch (Exception $e) {
-		trigger_error("Runner ERROR: Unhandled '{$method}' action in '{".class_name($class)."' class", E_USER_ERROR);
-	}
-
-	$obj_params = [];
-	foreach($r->getParameters() as $p) {
-		$className = $p->getClass()->name;
-		$obj_params[] = ($className ? new $className : array_shift($arguments));
-	}	
-
-	return array_merge($obj_params, $arguments);
+function HTML($text) {
+	return htmlspecialchars($text ?? '');
 }
+
 
 /* register */
 spl_autoload_register('autoloader');
 
-
+require(RnrDir.'base.php');
+require(RnrDir.'io.php');
 require(RnrDir.'error.php');
 require(RnrDir.'db.php');
-require(RnrDir.'io.php');
-require(RnrDir.'router.php');
 require(RnrDir.'tools.php');
+require(RnrDir.'router.php');
+
+if(defined('PSR4'))
+{
+	$PSR4 = include(PSR4);
+	$PSR4_Regex = [[], []];
+	foreach($PSR4 as $namespace => $dir)
+	{
+		$PSR4_Regex[0][] = '/' . str_replace('\\', '\\\\', $namespace) . '(.*)/i';
+		$PSR4_Regex[1][] = $dir[0] . '/$1';
+	}
+}
 
 use Rnr\utf8;
 use Rnr\DB;
@@ -108,26 +99,31 @@ header('Expires: 0');
 $GlobalTime = new StopWatch();
 if(AdvLog) Log::Write(' *** Starting session *** ');
 
-if(file_exists(ConfDir.'routes.php')) {
-	require(ConfDir.'routes.php');
+if(file_exists(AppDir.'conf/routes.php')) {
+	require(AppDir.'conf/routes.php');
 	define('URLModeRouter', true);
-	$runnerAction = Rnr\Router($routes, $_GET[rewriteVariable], new Rnr\RouterStatus(defaultModule, defaultAction));
+	$url = parse_url($_SERVER['REQUEST_URI']);
+	$runnerAction = Rnr\Router(
+		$routes,
+		urldecode($url['path']),
+		new Rnr\RouterStatus(defaultModule, defaultAction)
+	);
 } else {
 	$params = $_GET;
 	unset($params[ParamModule], $params[ParamAction]);
 	$runnerAction = new Rnr\RouterStatus($_GET[ParamModule] ? $_GET[ParamModule] : defaultModule, $_GET[ParamAction], RTR_OK, $params);
 }
 
-if(!$runnerAction->method) $runnerAction->method = defaultGlobalAction.actionPostfix;
+if(!$runnerAction->method) $runnerAction->method = defaultGlobalAction;
 
 $Runner = new $runnerAction->className;
 
-if(!$output) $output = new Response(null, null, null);
-if(method_exists($Runner, 'onLoad')) $output = call_user_func_array([$Runner, 'onLoad'], Inject($Runner, 'onLoad', []));
+if(isset($output)) $output = new Response(null, null, null);
+// if(method_exists($Runner, 'onLoad')) $output = call_user_func([$Runner, 'onLoad'], Inject($Runner, 'onLoad', []));
+if(method_exists($Runner, 'onLoad')) $output = call_user_func([$Runner, 'onLoad'], []);
 
 /* Pridavani parametru podle POST dat - Kandidat na DEPRECATED */
-/*
-if(($_SERVER['REQUEST_METHOD'] == 'POST') && StreamAsParameter){
+if($_SERVER['REQUEST_METHOD'] == 'POST'){
 	switch($_SERVER['CONTENT_TYPE']) {
 		case('application/json'):
 			array_push($runnerAction->params, JSON_decode(In::GetStream()));
@@ -139,44 +135,48 @@ if(($_SERVER['REQUEST_METHOD'] == 'POST') && StreamAsParameter){
 }
 
 /* osetreni POST metody - Kandidát na DEPRECATED */
-/*
 if(count($_POST) > 0) {
 	$postData = $_POST;
-	if($_POST[formIdentificator]) {
+	if(isset($_POST[formIdentificator])) {
 		$formID = $_POST[formIdentificator];
 		$method_name = "on{$formID}Submit";
 		unset($postData[formIdentificator]);
-		if(is_array($postData[$formID])) $postData = $postData[$formID];
+		if(isset($postData[$formID]) && is_array($postData[$formID])) $postData = $postData[$formID];
 	} else $method_name = 'onPostData';
-	if(method_exists($Runner, $method_name)) $output = call_user_func_array([$Runner, $method_name], Inject($Runner, $method_name, $postData));
-		elseif(!DisableWarnings) trigger_error("Runner WARNING: Unhandled '{$method_name}/POST' event", E_USER_ERROR);
+
+	// if(method_exists($Runner, $method_name)) $output = call_user_func_array([$Runner, $method_name], Inject($Runner, $method_name, [$postData]));
+	if(method_exists($Runner, $method_name)) $output = call_user_func_array([$Runner, $method_name], [$postData]);
+//		elseif(!DisableWarnings) trigger_error("Runner WARNING: Unhandled '{$method_name}/POST' event", E_USER_ERROR);
 }
-*/
+
 /* osetreni formulare z GET - Kandidát na DEPRECATED */
-/*
-if($_GET[formIdentificator]) {
+if(isset($_GET[formIdentificator])) {
 	$getData = $_GET;
 	$method_name = 'on'.$_GET[formIdentificator].'Submit';
 	unset($getData[formIdentificator]);
 	$getData = array_filter($getData);
-	if(method_exists($Runner, $method_name)) $output = call_user_func_array([$Runner, $method_name], Inject($Runner, $method_name, $getData));
+	// if(method_exists($Runner, $method_name)) $output = call_user_func_array([$Runner, $method_name], Inject($Runner, $method_name, $getData));
+	if(method_exists($Runner, $method_name)) $output = call_user_func_array([$Runner, $method_name], $getData);
 		elseif(!DisableWarnings) trigger_error("Runner WARNING: Unhandled '{$method_name}/GET' event", E_USER_ERROR);
 }
-*/
 
-if($output->type == null) {
-	if(method_exists($Runner, $runnerAction->method)) $output = call_user_func_array([$Runner, $runnerAction->method], Inject($Runner, $runnerAction->method, $runnerAction->params));
+
+if(empty($output->type)) {
+	// if(method_exists($Runner, $runnerAction->method)) $output = call_user_func_array([$Runner, $runnerAction->method], Inject($Runner, $runnerAction->method, $runnerAction->params));
+	if(method_exists($Runner, $runnerAction->method)) $output = call_user_func_array([$Runner, $runnerAction->method], $runnerAction->params);
 	elseif(method_exists($Runner, '__missing')) $output = call_user_func_array([$Runner, '__missing'], [$runnerAction->method]);
 	elseif(!DisableWarnings) trigger_error("Runner ERROR: Unhandled '{$runnerAction->method}' action in '{$runnerAction->className}' class", E_USER_ERROR);
 }
 
-if(($output->type == OUTPUT_TEMPLATE) && (method_exists($Runner, 'BeforeRender'))) call_user_func_array([$Runner, 'BeforeRender'], Inject($Runner, 'BeforeRender', []));
+// if(($output->type == OUTPUT_TEMPLATE) && (method_exists($Runner, 'BeforeRender'))) call_user_func_array([$Runner, 'BeforeRender'], Inject($Runner, 'BeforeRender', []));
+if(($output->type == OUTPUT_TEMPLATE) && (method_exists($Runner, 'BeforeRender'))) call_user_func_array([$Runner, 'BeforeRender'], []);
 
 if(($output->type == null) && (!DisableWarnings)) trigger_error('Runner WARNING: NULL output', E_USER_ERROR);
 
 if($output->type == OUTPUT_ERRORDOCUMENT) {
 	if($output->template == null) $output->template = ErrorDocumentName.$output->data1;
 	$message = Rnr\Output::$HttpCodes[$output->data1];
+	if(method_exists($Runner, 'BeforeRender')) call_user_func_array([$Runner, 'BeforeRender'], []);
 	if((!$message) && (!DisabledWarnings)) trigger_error('Runner/Output Error: &quot;'.$output->data1.'&quot; is not valid HTTP code');
 	header('HTTP/'.$message);
 	$output->type = OUTPUT_TEMPLATE;
@@ -188,26 +188,28 @@ if($output->type == OUTPUT_ERRORDOCUMENT) {
 switch($output->type) {
 	case(OUTPUT_TEMPLATE):
 
-		$Runner->view->SCRIPT_TIME = (string)$GlobalTime;
-
-		if(method_exists($Runner, 'Template') && (!$output->data1)) $output = call_user_func_array([$Runner, 'Template'], [$output->template]);
-		else {
-
-			$v = $view = $Runner->view->GetAssigned();
-
-			ob_start();
-
-			if(file_exists(TemplateOutput.$output->template.'.php')) include(TemplateOutput.$output->template.'.php');
-			else trigger_error('Runner/Ouput Error: template &quot;'.$output->template.'&quot; not found', E_USER_ERROR);
-
-			$output = ob_get_clean();
+		if(UseHTMLCompiler) {
+			include(RnrDir.'templatecompiler.php');
+			new Template($output->template);
 		}
-
 		$Runner->view->SendHeaders();
-		echo($output);
+		$v = $view = $Runner->view->GetAssigned();
+		$v->SCRIPT_TIME = (string)$GlobalTime;
 
-		if(method_exists($Runner, 'AfterRender')) call_user_func_array([$Runner, 'AfterRender'], Inject($Runner, 'AfterRender', []));
-		if(method_exists($Runner, 'OutputProcessing')) $output = call_user_func_array([$Runner, 'OutputProcessing'], Inject($Runner, 'OutputProcessing', $output));
+		ob_start();
+
+		if(file_exists(TemplateOutput.$output->template.'.php')) include(TemplateOutput.$output->template.'.php');
+	        elseif(file_exists(TemplateOutputCommon.$output->template.'.php')) include(TemplateOutputCommon.$output->template.'.php');
+		else trigger_error('Runner/Ouput Error: template &quot;'.$output->template.'&quot; not found', E_USER_ERROR);
+
+		$output = ob_get_clean();
+
+		//if(method_exists($Runner, 'AfterRender')) call_user_func_array([$Runner, 'AfterRender'], Inject($Runner, 'AfterRender', []));
+		if(method_exists($Runner, 'AfterRender')) call_user_func_array([$Runner, 'AfterRender'], []);
+		//if(method_exists($Runner, 'OutputProcessing')) $output = call_user_func_array([$Runner, 'OutputProcessing'], Inject($Runner, 'OutputProcessing', $output));
+		if(method_exists($Runner, 'OutputProcessing')) $output = call_user_func_array([$Runner, 'OutputProcessing'], [$output]);
+
+		echo($output);
 
 	break;
 
@@ -217,7 +219,7 @@ switch($output->type) {
 	break;
 
 	case(OUTPUT_JSON):
-		if($output->data2) header('HTTP/'.$message);
+		if($output->data2) header('HTTP/'.Rnr\Output::$HttpCodes[$output->data2]);
        	header('Content-type: application/json');
 		echo(json_encode($output->data1));
 		exit();
@@ -229,7 +231,11 @@ switch($output->type) {
 	break;
 
 	case(OUTPUT_PREVIOUS):
-        	header('Location: '.$_SERVER['HTTP_REFERER']);
+		if(isset($_SERVER['HTTP_REFERER'])) {
+        	header('Location: ' . $_SERVER['HTTP_REFERER']);
+		} else {
+			header('Location: ' . Base);
+		}
 	break;
 
 	case(OUTPUT_FILE):

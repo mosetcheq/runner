@@ -62,7 +62,7 @@ class DB {
 
 		self::$Prefix = $prefix;
 		try {
-			self::$PDO = new PDO("mysql:host={$server};dbname={$database}", $user, $password, array(PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8'));
+			self::$PDO = new PDO("mysql:host={$server};dbname={$database};charset=utf8mb4", $user, $password, [PDO::ATTR_PERSISTENT => true]);
 		} catch(\PDOException $e) {
 			Log::Write('Database error: '.$e->getMessage());
 			ErrorHandling::SQL(null, $e->getMessage());
@@ -74,8 +74,8 @@ class DB {
 	}
 
 
-	public static function Func($val) {
-		return new DBFunction($val);
+	public static function Func($val, $equal = '=') {
+		return new DBFunction($val, $equal);
 	}
 
 	private static function Q($query) {
@@ -83,9 +83,11 @@ class DB {
 		if(!$statement = self::$PDO->query($query)) {
 			$err = self::$PDO->errorInfo();
 			Log::Write($err[1].':'.$err[2]);
-			if(!DisableWarnings) ErrorHandling::SQL($query, $err);
+			if(!DisableWarnings) {
+				ErrorHandling::SQL($query, $err);
+				exit();
+			}
 			if(DB_DEBUGMODE) echo($query.'<br>'.$err[1].':'.$err[2]);
-			exit();
 		}
                 self::$totaltime += (microtime(true) - $start);
 		self::$PDOStatement = $statement;
@@ -182,7 +184,7 @@ class DB {
 	public static function Insert($tablename, $data, $datafilter = false, $ignore = false) {
 		if(self::$Prefix) $tablename = self::$Prefix.'_'.$tablename;
 		if($datafilter) $data = array_filter($data);
-		if($ignore) $ign = 'IGNORE ';
+		$ign = $ignore ? 'IGNORE ' : '';
 //		self::Exec("INSERT {$ign}INTO {$tablename} ".self::createInsertData($data, $datafilter).';');
 		$data = self::createInsertData($data, $datafilter);
 		self::PrepExec("INSERT {$ign}INTO {$tablename} {$data['query']};", $data['pass']);
@@ -302,7 +304,7 @@ class DB {
 		foreach($data as $key => $value) {
 			switch(gettype($value)) {
 				case('NULL'):
-					$value = 'NULL';
+					$value = ' = NULL';
 					break;
 				case('array'):
 					$value = implode(',', $value);
@@ -310,16 +312,16 @@ class DB {
 				case('object'): if(get_class($value) == 'Rnr\DBFunction') $value = $value->GetUpdate();
 					else {
 						$data_pass['u_'.$key] = serialize($value);
-						$value = ":u_{$key}";
+						$value = " = :u_{$key}";
 					}
 					break;
 				default:
 					$data_pass['u_'.$key] = $value;
-					$value = ":u_{$key}";
+					$value = " = :u_{$key}";
 					break;
 
 			}
-			$tmp[] = "{$key} = {$value}";
+			$tmp[] = "{$key} {$value}";
 		}
 		return array('query' => implode(', ', $tmp), 'pass' => $data_pass);
 	}

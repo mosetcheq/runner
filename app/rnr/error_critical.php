@@ -68,7 +68,7 @@ h1 {
 <?php if($err_file) { ?>
 <p>Script <strong><?=$err_file?></strong> at line <strong><?=$err_line;?></strong></p>
 <?php } ?>
-<p><strong>DT:</strong><?=date('Y-m-d H:i:s', time());?> <strong>IP:</strong><?=$_SERVER['REMOTE_ADDR'];?> <strong>METHOD:</strong><?=$_SERVER['REQUEST_METHOD'];?> <strong>URI:</strong><?=$_SERVER['REQUEST_URI'];?> <?=($_SERVER['HTTP_REFERER'] ? ' <strong>Referer:</strong>'.$_SERVER['HTTP_REFERER']:'');?></p>
+<p><strong>DT:</strong><?=date('Y-m-d H:i:s', time());?> <strong>IP:</strong><?=$_SERVER['REMOTE_ADDR'];?> <strong>METHOD:</strong><?=$_SERVER['REQUEST_METHOD'];?> <strong>URI:</strong><?=$_SERVER['REQUEST_URI'];?> <?=(isset($_SERVER['HTTP_REFERER']) ? ' <strong>Referer:</strong>'.$_SERVER['HTTP_REFERER']:'');?></p>
 </header>
 <?php if($err_file) { ?>
 <dl>

@@ -41,6 +41,7 @@ tr:nth-of-type(even) {
 <body>
 <header>
 <h1>Runtime errors</h1>
+<p><?=$_SERVER['REQUEST_URI'];?></p>
 </header>
 <table>
  <thead>
@@ -54,10 +55,10 @@ tr:nth-of-type(even) {
  <tbody>
 <?php if($errors) foreach($errors as $error) { ?>
   <tr>
-   <td><?=self::$E_TYPE[$error[0]];?></td>
-   <td><?=$error[1];?></td>
-   <td><?=$error[2];?></td>
-   <td><?=$error[3];?></td>
+   <td><?=self::$E_TYPE[$error['type']];?></td>
+   <td><?=$error['message'];?></td>
+   <td><?=$error['file'];?></td>
+   <td><?=$error['line'];?></td>
   </tr>
 <?php } ?>
  </tbody>

@@ -1,4 +1,6 @@
 <?php
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPOffice\PhpSpreadsheet\Spreadsheet;
 
 class Application extends Rnr {
 
