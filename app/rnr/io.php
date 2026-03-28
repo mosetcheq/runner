@@ -1,14 +1,6 @@
 <?php
 namespace Rnr;
 
-define('OUTPUT_TEMPLATE', 1);
-define('OUTPUT_ERRORDOCUMENT', 2);
-define('OUTPUT_REDIRECT', 4);
-define('OUTPUT_JSON', 8);
-define('OUTPUT_PREVIOUS', 32);
-define('OUTPUT_PLAIN', 64);
-define('OUTPUT_FILE', 128);
-
 class OutputType {
 	public $type;
 	public $template;
@@ -21,6 +13,7 @@ class OutputType {
 		$this->data1 = $data1;
 		$this->data2 = $data2;
 	}
+
 }
 
 class Output {
@@ -42,7 +35,7 @@ class Output {
                 304 => '1.0 304 Not Modified',
                 305 => '1.1 305 Use Proxy',
                 307 => '1.1 307 Temporary Redicect',
-		400 => '1.0 400 Bad Request',
+			400 => '1.0 400 Bad Request',
                 401 => '1.0 401 Unauthorised',
                 403 => '1.0 403 Forbidden',
                 404 => '1.0 404 Not Found',

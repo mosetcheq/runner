@@ -7,19 +7,23 @@ use Rnr\DB,
 
 abstract class Rnr {
 
+	public $view;
+	public $session;
+
 	public function __construct() {
 
 		if(defined('DB_host')) {
 			DB::connect(DB_host, DB_user, DB_password, DB_name);
 		}
 
-		$this->view = new Output();
+		$this->view = new stdClass;
 		$this->session = new Session('s');
 	}
 
 	
 	public function onLoad() {
 		$form = new FormHandler;
+		print_r($form);
 		return $form->CallHandler($this);
 	}
 

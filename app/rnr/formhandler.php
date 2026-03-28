@@ -62,7 +62,7 @@ class FormHandler
             if (method_exists($AppClass, $method)) {
                 return call_user_func_array([$AppClass, $method], [$this->FormData]);
             } else {
-                ErrorHandling::Critical(E_ERROR, "Runner Error: Form handler '{$method}' not found");
+                ErrorHandling::Critical(E_ERROR, "FormHandler error: Method <strong><em>{$method}</em></strong> for <strong><em>{$this->FormID}</em></strong> not found");
                 return false;
             }
         } else {

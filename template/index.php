@@ -17,8 +17,8 @@
 
 <h2>Submit form ...</h2>
 <p>Submiting form calls method &quot;onMyformSubmit&quot; ...</p>
-<form method="post">
-  <?=Rnr\FormHandler::Sender('myform');?>
+<form method="post" action="save">
+  <?=Rnr\FormHandler::Sender('MyForm');?>
   <input type="text" name="name" placeholder="place name here">
   <input type="submit" value="submit">
 </form>

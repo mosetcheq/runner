@@ -30,36 +30,6 @@ function autoloader($className) {
 
 }
 
-/* output types - start */
-
-function Template($filename) {
-	return new Response(OUTPUT_TEMPLATE, $filename, null, null);
-}
-
-function Plain($text, $contentType = 'text/plain', $charset = 'utf-8') {
-	return new Response(OUTPUT_PLAIN, $text, $contentType, $charset);
-}
-
-function ErrorDocument($error, $usertemplate = null) {
-	return new Response(OUTPUT_ERRORDOCUMENT, $usertemplate, $error, null);
-}
-
-function Redirect($url, $code = null) {
-	return new Response(OUTPUT_REDIRECT, null, $url, $code);
-}
-
-function JSON($data, $code = null) {
-	return new Response(OUTPUT_JSON, null, $data, $code);
-}
-
-function Previous() {
-	return new Response(OUTPUT_PREVIOUS, null, null, null);
-}
-
-function FileContent($source, $content = null, $filename = null) {
-	return new Response(OUTPUT_FILE, $source, $content, $filename);
-}
-/* output types - end */
 
 function HTML($text) {
 	return htmlspecialchars($text ?? '');
@@ -167,6 +137,12 @@ if(empty($output->type)) {
 	elseif(method_exists($Runner, '__missing')) $output = call_user_func_array([$Runner, '__missing'], [$runnerAction->method]);
 	elseif(!DisableWarnings) trigger_error("Runner ERROR: Unhandled '{$runnerAction->method}' action in '{$runnerAction->className}' class", E_USER_ERROR);
 }
+
+$output->send();
+
+exit;
+
+
 
 // if(($output->type == OUTPUT_TEMPLATE) && (method_exists($Runner, 'BeforeRender'))) call_user_func_array([$Runner, 'BeforeRender'], Inject($Runner, 'BeforeRender', []));
 if(($output->type == OUTPUT_TEMPLATE) && (method_exists($Runner, 'BeforeRender'))) call_user_func_array([$Runner, 'BeforeRender'], []);
