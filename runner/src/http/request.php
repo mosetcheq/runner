@@ -257,5 +257,111 @@ class Request
 		return $this->cookies;
 	}
 
+
+	public function getFile(string $key) : ?UploadedFile
+	{
+		if(!isset($this->files[$key])) return null;
+		if(is_uploaded_file($this->files[$key]['tmp_name']))
+		{
+			return new UploadedFile($this->files[$key]);
+		} else {
+			return null;
+		}
+	}
+
+	public function getFiles(string $key) : ?UploadedFileIterator
+	{
+		if(!isset($this->files[$key])) return null;
+		if($this->files[$key])
+		{
+			return new UploadedFileIterator($this->files[$key]);
+		} else {
+			return null;
+		}
+	}
 }
 
+
+
+class UploadedFile {
+
+	public readonly string $tmp_name;
+	public readonly int $size;
+	public readonly string $name;
+	public readonly string $type;
+	public readonly string $extension;
+	public readonly string $shortname;
+
+	public function __construct(?array $file = null) {
+		if(!$file) return;
+		foreach($file as $key => $value) $this->$key = $value;
+		$parts = explode('.', $this->name);
+		$this->extension = strtolower(array_pop($parts));
+		$this->shortname = implode('.', $parts);
+	}
+
+
+	public function isImage() : bool
+	{
+		return str_starts_with($this->type, 'image/');
+	}
+
+	public function move(string $directory, string $name = '') : bool
+	{
+		return move_uploaded_file($this->tmp_name, rtrim($directory, '/') . '/' . ($name ? $name : $this->name));
+	}
+}
+
+
+class UploadedFileIterator implements \Iterator, \Countable {
+
+	private array $files = [];
+	private int $pointer;
+
+	public function __construct(?array $files) {
+		if(!$files) return;
+
+		if(is_array($files['tmp_name'])) {
+			foreach($files['tmp_name'] as $i => $tmp_name) {
+				if(is_uploaded_file($tmp_name)) {
+					$this->files[] = new UploadedFile([
+						'tmp_name' => $tmp_name,
+						'size' => $files['size'][$i],
+						'name' => $files['name'][$i],
+						'type' => $files['type'][$i]
+					]);
+				}
+			}
+		} else {
+			if(is_uploaded_file($files['tmp_name'])) {
+				$this->files[] = new UploadedFile($files);
+			}
+		}
+
+		$this->pointer = 0;
+	}
+
+	function rewind(): void {
+		$this->pointer = 0;
+	}
+
+	function current(): UploadedFile {
+		return $this->files[$this->pointer];
+	}
+
+	function key(): mixed {
+		return $this->pointer;
+	}
+
+	function next(): void {
+		++$this->pointer;
+	}
+
+	function valid(): bool {
+		return isset($this->files[$this->pointer]);
+	}
+
+    function count(): int {
+        return count($this->files);
+    }
+}
