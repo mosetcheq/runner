@@ -1,4 +1,25 @@
 <?php
+namespace Config;
+
+
+final class Defaults {
+    public const StartClass = 'application';
+    public const Method = 'main';
+
+}
+
+final class DB {
+    public const Host = '';
+    public const Name = '';
+    public const User = '';
+    public const Password = '';
+    public const DebugMode = false;
+}
+
+final class Form {
+    public const Secret = 'uuiiSecretString';
+    public const TokenTTL = 3600;
+}
 
 date_default_timezone_set('Europe/Prague');
 
@@ -50,3 +71,5 @@ define('ParamAction', 'action');
 
 /* others */
 define('salt', '');
+define('RNRFORM_SECRET', 'uuiiSecretString');
+define('RNRFORM_TTL', 3600);
