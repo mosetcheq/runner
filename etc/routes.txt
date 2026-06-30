@@ -1,0 +1,12 @@
+GET login => User:login
+GET logout => User:logout @user
+GET register => User:register
+
+GET documents/{id}/{?page} => documents:view
+
+GET REGEX .*-a(\d+)\.html => Articles:show(id_article)  #zobrazeni clanku
+
+ANY admin/* => Admin\* @admin
+GET admin/logout => Admin\Admin:logout @admin
+
+ANY * => *(id,page) @user #fallback

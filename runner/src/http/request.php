@@ -258,6 +258,12 @@ class Request
 	}
 
 
+	/**
+	 * Vratí objekt uploadovaného souboru
+	 *
+	 * @param string $key název formulářového pole
+	 * @return UploadedFile|null
+	 */
 	public function getFile(string $key) : ?UploadedFile
 	{
 		if(!isset($this->files[$key])) return null;
@@ -269,6 +275,13 @@ class Request
 		}
 	}
 
+
+	/**
+	 * Vrátí soubory jako iterátor
+	 *
+	 * @param string $key název formulářového pole
+	 * @return UploadedFileIterator|null
+	 */
 	public function getFiles(string $key) : ?UploadedFileIterator
 	{
 		if(!isset($this->files[$key])) return null;

@@ -33,7 +33,7 @@ class FormHandler
         $timeStamp = time();
         $random = bin2hex(random_bytes(8));
         $key = $formId . '|' . $timeStamp . '|' . $random;
-        $token = base64_encode($key . '|' . hash_hmac('sha256', $key, Config\Form::Secret));
+        $token = base64_encode($key . '|' . hash_hmac('sha256', $key, Config\Form::SECRET));
         if ($HtmlOut) {
             return ('<input type="hidden" name="_rnrform" value="' . $token . '">');
         } else {
@@ -71,7 +71,7 @@ class FormHandler
 
         
          $key = $formId . '|' . $timeStamp . '|' . $random;
-         $hashed = hash_hmac('sha256', $key, Config\Form::Secret);
+         $hashed = hash_hmac('sha256', $key, Config\Form::SECRET);
     
         if(!hash_equals($hashed, $hash))
         {
@@ -79,7 +79,7 @@ class FormHandler
             return;
         }
         
-        if((Config\Form::TokenTTL > 0) && (time() - (int)$timeStamp > Config\Form::TokenTTL))
+        if((Config\Form::TOKEN_TTL > 0) && (time() - (int)$timeStamp > Config\Form::TOKEN_TTL))
         {
              $this->errors |= FormError::Expired->value;
             return;

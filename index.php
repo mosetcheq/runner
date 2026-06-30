@@ -1,3 +1,3 @@
 <?php
-require('conf/config.php');
-require(RnrDir.'boot.php');
+require('config/config.php');
+require(Config\Path::RNR . 'boot.php');
