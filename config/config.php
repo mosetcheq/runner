@@ -5,14 +5,16 @@ namespace Config;
 final class Path {
     public const DOC_ROOT = 'd:/web/_runner/';
     public const RNR = self::DOC_ROOT . 'runner/src/';
-    public const APP = self::DOC_ROOT . 'app/src/';
+    public const APP = self::DOC_ROOT . 'app/';
     public const ETC = self::DOC_ROOT . 'etc/';
+    public const CACHE = self::DOC_ROOT . 'cache/';
 
 }
 
 final class Defaults {
-    public const START_CLASS = 'application';
-    public const DEFAULT_METHOD = 'main';
+    public const DEFAULT_CONTROLLER = \App\Controllers\Home::class;
+    public const DEFAULT_METHOD = 'index';
+    public const CONTROLLER_NAMESPACE = '\\App\\Controllers';
 }
 
 final class DB {

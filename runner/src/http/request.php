@@ -37,6 +37,10 @@ class Request
 	private array $cookies;
 	private array $files;
 	private ?string $body = null;
+	public array $params = [];
+
+	public array $namedParams = [];
+	public array $unnamedParams = [];
 
 
 	public function __construct()
@@ -292,6 +296,27 @@ class Request
 			return null;
 		}
 	}
+
+	public function addNamedParam(string $name, mixed $value): void
+    {
+        $this->namedParams[$name] = $value;
+    }
+
+    public function addUnnamedParam(mixed $value): void
+    {
+        $this->unnamedParams[] = $value;
+    }
+
+    public function getNamedParam(string $name): mixed
+    {
+        return $this->namedParams[$name] ?? null;
+    }
+
+    public function getUnnamedParams(): array
+    {
+        return $this->unnamedParams;
+    }
+
 }
 
 

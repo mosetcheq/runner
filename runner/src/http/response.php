@@ -10,6 +10,7 @@ enum ResponseType
     case Previous;
     case Empty;
     case Plain;
+    case HTML;
 }
 
 enum HttpStatus: int
@@ -112,6 +113,18 @@ class Response
         $resp = new Response(ResponseType::Template);
         $resp->template = $filename;
         $resp->data = $data ?? new \stdClass();
+        return $resp;
+	}
+
+    /**
+     * Vrátí jako výstup aplikace HTML text
+     * @param object $data;
+	 * @return object Response
+    */
+	public static function HTML($data) : self
+	{
+        $resp = new Response(ResponseType::HTML);
+        $resp->data = $data;
         return $resp;
 	}
 
@@ -236,6 +249,14 @@ class Response
 				else trigger_error('Runner/Ouput Error: template &quot;' . $this->template . '&quot; not found', E_USER_ERROR);
                 break;
 
+            case (ResponseType::HTML):
+                if ($this->contentType != null)
+                {
+                    header('Content-type: ' . $this->contentType);
+                }
+                echo('<!DOCTYPE html><html lang="cs"><head><meta charset="utf-8"></head><body>' . $this->data . '</body></html>');
+                break;
+
 			case (ResponseType::Json):
 				header('Content-type: application/json');
 				echo(json_encode($this->data));
@@ -249,7 +270,7 @@ class Response
                 if((isset($_SERVER['HTTP_REFERER'])) && ($_SERVER['HTTP_REFERER'] != '')) {
                     header('Location: ' . $_SERVER['HTTP_REFERER']);
                 } else {
-                    header('Location: ' . Base);
+                    header('Location: /');
                 }
                 break;
 

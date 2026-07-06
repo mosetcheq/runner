@@ -1,8 +1,0 @@
-GET login => User:login
-GET logout => User:logout @user
-GET register => User:register
-
-ANY admin/* => Admin/* @admin
-GET admin/logout => Admin/Admin:logout @admin
-
-ANY * => *{id,page} @user
