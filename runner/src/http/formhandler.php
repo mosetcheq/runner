@@ -1,5 +1,6 @@
 <?php
 namespace Rnr\Http;
+use Rnr\Http\FormData;
 use \Config;
 
 enum FormError: int
@@ -15,26 +16,29 @@ enum FormError: int
  */
 class FormHandler
 {
-
+    private Request $request;
     public int $errors = 0;
     public bool $sended = false;
-    public string $sender = '';
+    public ?string $sender = '';
     private string $formId = '';
+    private ?string $controller = '';
+    private bool $public = false;
     public ?FormData $formData = null;
 
 
     /**
      * Vygeneruje SENDER klíč pro směřovaní formuláře
      * @param string $formId identifikátor formuláře
-     * @param bool $HtmlOut false vrátí klíč, true vrátí string s input tagem
-     */
-    public static function Sender($formId, $HtmlOut = true) : string
+     * @param bool $htmlOut false vrátí klíč, true vrátí string s input tagem
+     * @param bool $public true jestli se má formulář obsloužit ještě před middleware chain
+    */
+    public static function sender($formId, $public = false, $htmlOut = true) : string
     {
         $timeStamp = time();
         $random = bin2hex(random_bytes(8));
-        $key = $formId . '|' . $timeStamp . '|' . $random;
+        $key = $formId . '|' . ($public ? 'public' : 'private') . '|' . $timeStamp . '|' . $random;
         $token = base64_encode($key . '|' . hash_hmac('sha256', $key, Config\Form::SECRET));
-        if ($HtmlOut) {
+        if ($htmlOut) {
             return ('<input type="hidden" name="_rnrform" value="' . $token . '">');
         } else {
             return $token;
@@ -47,11 +51,11 @@ class FormHandler
     /**
      * Inicializuje FormHandler
      */
-    public function __construct()
+    public function __construct(Request $request)
     {
-        $data = ($_SERVER['REQUEST_METHOD'] == 'GET') ? $_GET : $_POST;
-
-        $this->sender = $_SERVER['HTTP_REFERER'] ?? '';
+        $this->request = $request;
+        $data = ($request->getMethod() == 'GET') ? $request->getQueryData() : $request->getPostData();
+        $this->sender = $request->getReferer();
 
         if(!isset($data['_rnrform'])) return;
 
@@ -62,15 +66,15 @@ class FormHandler
         }
 
         $sender = explode('|', $decoded);
-        if(count($sender) != 4) {
+        if(count($sender) != 5) {
             $this->errors = FormError::Invalid->value;
             return;
         }
 
-        [$formId, $timeStamp, $random, $hash] = $sender;
+        [$formId, $public, $timeStamp, $random, $hash] = $sender;
 
         
-         $key = $formId . '|' . $timeStamp . '|' . $random;
+         $key = $formId . '|' . $public . '|' . $timeStamp . '|' . $random;
          $hashed = hash_hmac('sha256', $key, Config\Form::SECRET);
     
         if(!hash_equals($hashed, $hash))
@@ -86,7 +90,7 @@ class FormHandler
         }
 
         // kontrola reload
-        if (isset($_COOKIE['_f']) && ($_COOKIE['_f'] === $random))
+        if ($request->getCookie('_f')=== $random)
             {
              $this->errors |= FormError::Reload->value;
         }
@@ -94,29 +98,46 @@ class FormHandler
         setcookie('_f', $random);
 
         $this->sended = true;
-        $this->formId = $formId;
+        $target = explode(':', $formId);
+        $this->formId = array_pop($target);
+        $this->controller = array_pop($target);
+        $this->public = ($public === 'public');
         $this->formData = new FormData($data);
     }
 
 
 
     /**
-     * Zavolá obsluhu formuláře ve třídě AppClass
-     * @param class $AppClass třída s obslužným skriptem
+     * Vrací informaci o tom jestli je formulář veřejný nebo nikoliv
+     *
+     * @return boolean
      */
-    public function callHandler($AppClass): false | Response
+    public function isPublic()
+    {
+        return $this->public;
+    }
+
+
+
+    /**
+     * Zavolá obsluhu formuláře
+     */
+    public function callHandler(): false | Response
     {
         if (($this->sended) && ($this->errors === 0)) {
-            $method = 'on' . ucfirst($this->formId) . 'Submit';
-            if (method_exists($AppClass, $method)) {
-                return $AppClass->$method($this->formData);
+            $controllerName = Config\Defaults::CONTROLLER_NAMESPACE . '\\' . ($this->controller ? $this->controller : Config\Defaults::DEFAULT_CONTROLLER);
+            $controller = new $controllerName;
+            $method = $this->formId;
+            if (method_exists($controller, $method)) {
+                return $controller->$method($this->formData, $this->request);
             } else {
-                throw new FormHandlerException("FormHandler error: Method {$method} for {$this->formId} not found");
+                throw new FormHandlerException("FormHandler error: Method {$controllerName}::{$method} for {$this->formId} not found");
             }
         } else {
             return false;
         }
     }
+
 
 
     /**
@@ -128,80 +149,6 @@ class FormHandler
         return ($this->formId === $formName) && ($this->sended) && ($this->errors === 0);
     }
 }
-
-
-
-/**
- * Class FormData - data z formularu
- */
-class FormData
-{
-
-    private array $data;
-
-    /**
-     * Konstruktor
-     * @param array $data;
-     */
-    public function __construct(array $data)
-    {
-        unset($data['_rnrform']);
-        $this->data = $data;
-    }
-
-
-    /**
-     * getter
-     * @param string $key Nazev pole
-     * @return string
-     */
-    public function __get(string $key) : mixed
-    {
-        return $this->data[$key] ?? null;
-    }
-
-
-    /**
-     * Otestování zda pole existuje a případně má uvedenou hodnotu
-     * @param string $key název pole
-     * @param string $value hodnota pole
-     * @return bool
-     */
-    public function check($key, $value = null) : bool
-    {
-        if($value == null) {
-            return isset($this->data[$key]);
-        }
-        elseif(isset($this->data[$key])) {
-            return($this->data[$key] == $value);
-        }
-        else return(false);
-    }
-
-
-    /**
-     * Vrátí všechny data z formuláře jako pole
-     * @return object
-     */
-    public function getAll(): \stdClass
-    {
-        return (object) $this->data;
-    }
-
-
-    /**
-     * Provede php funkci TRIM na všechny pole formuláře
-     * @param string $characters znaky na ořez
-     */
-    public function trim($characters = false) : self
-    {
-        foreach ($this->data as $key => $val) {
-            $this->data[$key] = (is_array($val) ? array_filter($val) : trim($val, $characters));
-        }
-        return $this;
-    }
-}
-
 
 
 class FormHandlerException extends \Exception {}

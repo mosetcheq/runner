@@ -288,6 +288,7 @@ class Router {
 
             $route = [
                 'params' => [],
+                'match' => null,
             ];
 
             // levá strana: METHOD + ROUTE
@@ -504,7 +505,7 @@ class Router {
 
         foreach ($this->routes as $route) {
 
-            // 2) Metoda nesedí → přeskočit, ale zapamatovat si, že URL existuje
+        // 2) Metoda nesedí → přeskočit, ale zapamatovat si, že URL existuje
             if ($route['method'] !== 'ANY' && $route['method'] !== $method) {
                 // URL sedí, ale metoda ne → možný 405
                 if ($route['match'] === $url || $route['type'] !== 'Static') {

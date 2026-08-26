@@ -6,6 +6,7 @@ final class Path {
     public const DOC_ROOT = 'd:/web/_runner/';
     public const RNR = self::DOC_ROOT . 'runner/src/';
     public const APP = self::DOC_ROOT . 'app/';
+    public const TEMPLATES = self::DOC_ROOT . 'app/templates/';
     public const ETC = self::DOC_ROOT . 'etc/';
     public const CACHE = self::DOC_ROOT . 'cache/';
 
@@ -15,6 +16,7 @@ final class Defaults {
     public const DEFAULT_CONTROLLER = \App\Controllers\Home::class;
     public const DEFAULT_METHOD = 'index';
     public const CONTROLLER_NAMESPACE = '\\App\\Controllers';
+    public const MIDDLEWARE_NAMESPACE = '\\App\\Middleware';
 }
 
 final class DB {

@@ -237,6 +237,8 @@ class Response
             header("HTTP/1.1 {$status->value} {$status->message()}");
 		}
 
+        if($this->headers) foreach($this->headers as $header) header($header);
+
 		switch ($this->type) {
             case (ResponseType::Template):
                 if ($this->contentType != null)
@@ -245,7 +247,7 @@ class Response
                 }
 
 				$view = $this->data;
-				if(file_exists(TemplateOutput . $this->template . '.php')) include(TemplateOutput . $this->template . '.php');
+				if(file_exists(\Config\Path::TEMPLATES . $this->template . '.php')) include(\Config\Path::TEMPLATES . $this->template . '.php');
 				else trigger_error('Runner/Ouput Error: template &quot;' . $this->template . '&quot; not found', E_USER_ERROR);
                 break;
 

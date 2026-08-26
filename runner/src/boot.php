@@ -3,6 +3,7 @@
 require(Config\Path::RNR . '/core/autoloader.php');
 
 use Rnr\Core\Autoloader;
+use Rnr\Http\FormHandler;
 use Rnr\Http\Request;
 use Rnr\Http\Response;
 use Rnr\Core\Router;
@@ -17,6 +18,7 @@ Autoloader::addMap([
 
 // inicializace DI kontejneru
 $request = new Request();
+$request->formHandler = new FormHandler($request);
 DI::setInstance(new DI());
 
 // kompilace / načtení rout

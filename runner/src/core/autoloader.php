@@ -19,7 +19,6 @@ class Autoloader {
             {
                 $relative = substr($className, strlen($prefix));
                 $file = rtrim($baseDir, '/') . '/' . str_replace('\\', '/', $relative) . '.php';
-
                 if (is_file($file))
                 {
                     require $file;

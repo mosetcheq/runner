@@ -8,9 +8,9 @@ return array (
     'params' => 
     array (
     ),
-    'method' => 'GET',
-    'type' => 'Static',
     'match' => 'login',
+    'method' => 'ANY',
+    'type' => 'Static',
     'middleware' => 
     array (
     ),
@@ -22,9 +22,9 @@ return array (
     'params' => 
     array (
     ),
+    'match' => 'logout',
     'method' => 'GET',
     'type' => 'Static',
-    'match' => 'logout',
     'middleware' => 
     array (
       0 => 'user',
@@ -37,9 +37,9 @@ return array (
     'params' => 
     array (
     ),
+    'match' => 'register',
     'method' => 'GET',
     'type' => 'Static',
-    'match' => 'register',
     'middleware' => 
     array (
     ),
@@ -53,6 +53,7 @@ return array (
       0 => 'id',
       1 => 'page',
     ),
+    'match' => NULL,
     'method' => 'GET',
     'type' => 'Parametric',
     'segments' => 
@@ -91,6 +92,7 @@ return array (
     array (
       0 => 'id_article',
     ),
+    'match' => NULL,
     'method' => 'GET',
     'type' => 'Regex',
     'regex' => '#.*-a(\\d+)\\.html#',
@@ -105,9 +107,9 @@ return array (
     'params' => 
     array (
     ),
+    'match' => 'admin/logout',
     'method' => 'GET',
     'type' => 'Static',
-    'match' => 'admin/logout',
     'middleware' => 
     array (
       0 => 'admin',
@@ -122,6 +124,7 @@ return array (
       0 => 'id',
       1 => 'page',
     ),
+    'match' => NULL,
     'method' => 'ANY',
     'type' => 'Wildcard',
     'prefix' => 'admin',
@@ -139,6 +142,7 @@ return array (
       0 => 'id',
       1 => 'page',
     ),
+    'match' => NULL,
     'method' => 'ANY',
     'type' => 'Fallback',
     'middleware' => 

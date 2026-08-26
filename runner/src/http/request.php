@@ -42,6 +42,7 @@ class Request
 	public array $namedParams = [];
 	public array $unnamedParams = [];
 
+	public FormHandler $formHandler;
 
 	public function __construct()
 	{
@@ -84,6 +85,17 @@ class Request
 	public function getQuery(string $key) : mixed
 	{
 		return $this->get[$key] ?? null;
+	}
+
+
+	/**
+	 * Vrátí celý GET jako pole
+	 *
+	 * @return mixed
+	 */
+	public function getQueryData() : array
+	{
+		return $this->get;
 	}
 
 

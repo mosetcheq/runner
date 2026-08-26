@@ -1,4 +1,4 @@
-GET login => User:login
+ANY login => User:login
 GET logout => User:logout @user
 GET register => User:register
 
