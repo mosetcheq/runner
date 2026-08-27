@@ -30,11 +30,27 @@ class DB
     }
 
 
-    public function fetchAll(string $query, ?array $values = null, ?string $objectType = null, ?RowProcessorInterface $processor = null)
+    public function fetchAll(string $query, ?array $values = null, ?string $objectType = null, ?RowProcessorInterface $processor = null) : array
     {
-        
+        $output = [];
+        if($values === null) {
+            $statement = $this->query($query);
+        } else {
+            $statement = $this->prepare($query);
+            $statement->execute($values);
+        }
+        if($processor !== null) {
+            while($row = $statement->fetchObject($objectType)) {
+                $output[] = $processor->process($row);
+            }
+        } else {
+            while($row = $statement->fetchObject($objectType)) {
+                $output[] = $row;
+            }
+        }
+        return $output;
     }
-
+    
 
     public function fetchRow(string $query, ?array $values = null, ?string $objectType = null)
     {
@@ -51,22 +67,28 @@ class DB
     public function fetchRowFrom(string $table, array $where, ?string $objectType = null)
     {
         $preparedWhere = $this->prepareWhereQuery($where);
-        $query = "SELECT * FROM {$table} " . $preparedWhere->query . ' LIMIT 1;';
-        $statement = $this->prepare($query);
+        $statement = $this->prepare("SELECT * FROM {$table} " . $preparedWhere->query . ' LIMIT 1;');
         $statement->execute($preparedWhere->data);
         return $statement->fetchObject($objectType);
     }
 
 
-    public function insert(string $tableName, array $values, bool $dataFilter, bool $ignore)
+    public function insert(string $tableName, array $values, bool $ignore = false) : ?string
     {
-        
+        $preparedData = $this->prepareInsertQuery($values);
+        $statement = $this->prepare('INSERT ' . ($ignore ? 'IGNORE ' : '') . 'INTO ' . $tableName . ' ' . $preparedData->query);
+        $statement->execute($preparedData->data);
+        return $this->pdo->lastInsertId();
     }
 
 
-    public function update(string $tableName, array $values, array $where, ?int $limit)
+    public function update(string $tableName, array $values, array $where, ?int $limit = null) : ?int
     {
-
+        $preparedData = $this->prepareUpdateQuery($values);
+        $preparedWhereData = $this->prepareWhereQuery($where);
+        $statement = $this->prepare('UPDATE ' . $tableName . ' SET ' . $preparedData->query . $preparedWhereData->query . ($limit ? ' LIMIT ' . $limit : '') . ';');
+        $statement->execute(array_merge($preparedData->data, $preparedWhereData->data));
+        return $statement->rowCount();
     }
 
 
