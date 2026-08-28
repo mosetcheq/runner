@@ -2,6 +2,7 @@
 
 namespace Rnr\DB;
 
+use Exception;
 use PDO;
 use PDOStatement;
 use Rnr\DB\Interfaces\RowProcessorInterface;
@@ -10,26 +11,54 @@ class DB
 {
 
     private PDO $pdo;
-    private PDOStatement $statement;
 
+    /**
+     * Konstruktor
+     *
+     * @param string $host
+     * @param string $userName
+     * @param string $userPassword
+     * @param string $database
+     */
     public function __construct(string $host, string $userName, string $userPassword, string $database)
     {
         $this->pdo = new PDO("mysql:host={$host};dbname={$database};charset=utf8mb4", $userName, $userPassword);
     }
 
 
+    /**
+     * Nádstavba PDO::query
+     *
+     * @param string $query SQL Query
+     * @return PDOStatement
+     */
     public function query(string $query) : PDOStatement
     {
         return $this->pdo->query($query);
     }
 
 
+    /**
+     * Nádstavba PDO::prepare
+     *
+     * @param string $query SQL Query
+     * @return PDOStatement
+     */
     public function prepare(string $query) : PDOStatement
     {
         return $this->pdo->prepare($query);
     }
 
 
+    /**
+     * Načte obsah celé query jako pole objektů
+     *
+     * @param string $query SQL Query
+     * @param array|null $values Hodnoty pro data bind
+     * @param string|null $objectType typ objektu
+     * @param RowProcessorInterface|null $processor Data processing načtených dat
+     * @return array
+     */
     public function fetchAll(string $query, ?array $values = null, ?string $objectType = null, ?RowProcessorInterface $processor = null) : array
     {
         $output = [];
@@ -52,7 +81,16 @@ class DB
     }
     
 
-    public function fetchRow(string $query, ?array $values = null, ?string $objectType = null)
+    /**
+     * Načte řádek tabulky podle query
+     * Je potřeba si ohlídat aby příkaz vrátíl pouze jeden řádek - LIMIT 1
+     *
+     * @param string $query SQL query
+     * @param array|null $values Hodnoty pro data bind
+     * @param string|null $objectType typ objektu
+     * @return object|null načtená data
+     */
+    public function fetchRow(string $query, ?array $values = null, ?string $objectType = null) : ?object
     {
         if($values === null) {
             $statement = $this->query($query);
@@ -64,7 +102,15 @@ class DB
     }
 
 
-    public function fetchRowFrom(string $table, array $where, ?string $objectType = null)
+    /**
+     * Načte řádek z tabulky
+     *
+     * @param string $table Název tabulky
+     * @param array $where Podmínka výběru
+     * @param string|null $objectType typ objektu
+     * @return object|null načtená data
+     */
+    public function fetchRowFrom(string $table, array $where, ?string $objectType = null) : ?object
     {
         $preparedWhere = $this->prepareWhereQuery($where);
         $statement = $this->prepare("SELECT * FROM {$table} " . $preparedWhere->query . ' LIMIT 1;');
@@ -73,6 +119,14 @@ class DB
     }
 
 
+    /**
+     * Provede vložení dat do tabulky
+     *
+     * @param string $tableName Název tabulky
+     * @param array $values Data k vložení
+     * @param boolean $ignore Ignorovat existující index
+     * @return string|null ID nového řádku
+     */
     public function insert(string $tableName, array $values, bool $ignore = false) : ?string
     {
         $preparedData = $this->prepareInsertQuery($values);
@@ -82,6 +136,15 @@ class DB
     }
 
 
+    /**
+     * Provede aktualizaci dat v tabulce
+     *
+     * @param string $tableName Název tabulky
+     * @param array $values Data k UPDATE
+     * @param array $where Pole podmínek pro update
+     * @param integer|null $limit Limit řádků nebo null
+     * @return integer|null Vrátí počet aktualizovaných řádků
+     */
     public function update(string $tableName, array $values, array $where, ?int $limit = null) : ?int
     {
         $preparedData = $this->prepareUpdateQuery($values);
@@ -92,12 +155,56 @@ class DB
     }
 
 
-
-    public function prepareInsertQuery(array $data, bool $dataFilter = false) : PreparedQueryData
+    /**
+     * Připraví PDOStatement pro opakovaný insert
+     *
+     * @param string $tableName Jméno tabulky
+     * @param array $keys Klíče pole, které se bude vkládat
+     * @param boolean $ignore Mají se ignorovat data s existujícím indexem
+     * @return PDOStatement
+     */
+    public function prepareInsert(string $tableName, array $keys, bool $ignore = false) : PDOStatement
     {
-        if($dataFilter) {
-            $data = array_filter($data);
+        $valKeys = array_map(fn($key) => ':' . $key, $keys);
+        return $this->prepare('INSERT ' . ($ignore ? 'IGNORE ' : '') . 'INTO ' . $tableName . ' (' . implode(', ', $keys) . ') VALUES (' . implode(', ', $valKeys) .');');
+    }
+
+
+    /**
+     * Připraví PDOStatement pro opakovaný update
+     *
+     * @param string $tableName Jméno tabulky
+     * @param array $keys Klíče pole dat, které se budou zpracovávat
+     * @param array $whereKeys Pole s klíči, které budou použity ve WHERE podmínce - musí být součástí $keys
+     * @return PDOStatement
+     */
+    public function prepareUpdate(string $tableName, array $keys, array $whereKeys) : PDOStatement
+    {
+        if(empty($whereKeys)) {
+            throw new Exception('Array whereKeys is empty');
         }
+        if(!empty(array_diff($whereKeys, $keys))) {
+            throw new Exception('Some whereKeys are not part of keys');
+        }
+        $keys = array_diff($keys, $whereKeys);
+        if(empty($keys)) {
+            throw new Exception('Empty value keys');
+        }
+        $setPair = array_map(fn($key) => $key . ' = :' . $key, $keys);
+        $wherePair = array_map(fn($key) => $key . ' = :' . $key, $whereKeys);
+        return $this->prepare('UPDATE ' . $tableName . ' SET ' . implode(', ', $setPair) . ' WHERE ' . implode(' AND ', $wherePair) .';');
+    }
+
+
+    /**
+     * Připraví parametry pro INSERT SQL dotaz
+     *
+     * @param array $data pole dat, které chceme vkládat
+     * @param boolean $disablePrefix zakáže prefix v připravovaném dotazu :bind místo :i_bind
+     * @return PreparedQueryData
+     */
+    private function prepareInsertQuery(array $data, bool $disablePrefix = false) : PreparedQueryData
+    {
         $passedData = [];
         foreach($data as $key => $value) {
             switch(gettype($value)) {
@@ -113,8 +220,8 @@ class DB
                     $value = implode(',', $value);
 
                 default:
-                    $passedData['i_' . $key] = $value;
-                    $value = ':i_' . $key;
+                    $passedData[($disablePrefix ? '' : 'i_') . $key] = $value;
+                    $value = ':' . ($disablePrefix ? '' : 'i_') . $key;
             }
 
             $data[$key] = $value;
@@ -123,11 +230,16 @@ class DB
     }
 
 
-    public function prepareUpdateQuery(array $data, bool $dataFilter = false) : PreparedQueryData
+    /**
+     * Připraví parametry pro UPDATE SQL dotaz
+     *
+     * @param array $data pole dat, které chceme vkládat
+     * @param boolean $disablePrefix zakáže prefix v připravovaném dotazu :bind místo :u_bind
+     * @return PreparedQueryData
+     */
+    private function prepareUpdateQuery(array $data, bool $disablePrefix = false) : PreparedQueryData
     {
-        if($dataFilter) {
-            $data = array_filter($data);
-        }
+
         $passedData = [];
         $updateData = [];
         foreach($data as $key => $value) {
@@ -144,8 +256,8 @@ class DB
                     $value = implode(',', $value);
 
                 default:
-                    $passedData['u_' . $key] = $value;
-                    $updateData[] = $key . ' = :u_' . $key;
+                    $passedData[($disablePrefix ? '' : 'u_') . $key] = $value;
+                    $updateData[] = $key . ' = :' . ($disablePrefix ? '' : 'u_') . $key;
             }
 
         }
@@ -153,7 +265,13 @@ class DB
     }
 
 
-    public function prepareWhereQuery(array $data) : PreparedQueryData
+    /**
+     * Připraví parametry pro WHERE do SQL dotazu
+     *
+     * @param array $data pole dat které mají být použity jako podmínka
+     * @return PreparedQueryData
+     */
+    private function prepareWhereQuery(array $data) : PreparedQueryData
     {
         $passedData = [];
         $whereCause = [];

@@ -1,11 +1,21 @@
 <?php
-
 namespace Rnr\DB;
 
 class PreparedQueryData
 {
 
+    /**
+     * Query parametry ve string formátu
+     *
+     * @var string
+     */
     public string $query;
+
+    /**
+     * Filtrované pole dat pro execute
+     *
+     * @var array
+     */
     public array $data;
 
 

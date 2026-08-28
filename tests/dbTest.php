@@ -111,4 +111,17 @@ class DBTest extends TestCase
     }
 
 
+    public function testInsertPrepare()
+    {
+        $result = $this->db->prepareInsert('users', ['id_user', 'user_name', 'user_role']);
+        $this->assertInstanceOf('PDOStatement', $result);
+    }
+
+    public function testUpdatePrepare()
+    {
+        $result = $this->db->prepareUpdate('users', ['id_user', 'user_name', 'user_role'], ['id_user']);
+        $this->assertInstanceOf('PDOStatement', $result);
+    }
+
+
 }
