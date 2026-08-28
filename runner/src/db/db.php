@@ -51,6 +51,21 @@ class DB
 
 
     /**
+     * Provede SQL Query s daty
+     *
+     * @param string $query SQL Query
+     * @param array|null $data data bindovan8 do query
+     * @return PDOStatement
+     */
+    public function exec(string $query, ?array $data = null) : PDOStatement
+    {
+        $statement = $this->prepare($query);
+        $statement->execute($data);
+        return $statement;
+    }
+
+
+    /**
      * Načte obsah celé query jako pole objektů
      *
      * @param string $query SQL Query
