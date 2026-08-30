@@ -6,6 +6,8 @@ use Exception;
 use PDO;
 use PDOStatement;
 use Rnr\DB\Interfaces\RowProcessorInterface;
+use Rnr\Utils\Logger;
+use Rnr\Utils\LogMessageType;
 
 class DB
 {
@@ -20,7 +22,7 @@ class DB
      * @param string $userPassword
      * @param string $database
      */
-    public function __construct(string $host, string $userName, string $userPassword, string $database)
+    public function __construct(string $host, string $userName, string $userPassword, string $database, private ?Logger $logger = null)
     {
         $this->pdo = new PDO("mysql:host={$host};dbname={$database};charset=utf8mb4", $userName, $userPassword);
     }
@@ -34,6 +36,9 @@ class DB
      */
     public function query(string $query) : PDOStatement
     {
+        if($this->logger) {
+            $this->logger->write(LogMessageType::SQL, $query);
+        }
         return $this->pdo->query($query);
     }
 
@@ -46,6 +51,9 @@ class DB
      */
     public function prepare(string $query) : PDOStatement
     {
+        if($this->logger) {
+            $this->logger->write(LogMessageType::SQL, $query);
+        }
         return $this->pdo->prepare($query);
     }
 

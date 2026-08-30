@@ -4,15 +4,21 @@ use PHPUnit\Framework\TestCase;
 use Rnr\DB\DB;
 use Rnr\DB\SQLFunction;
 use Rnr\DB\Expression;
+use Rnr\Utils\Logger;
+use Rnr\Utils\LogMessageType;
+use Rnr\Utils\LogOutput;
 
 class DBTest extends TestCase
 {
     public $db;
+    public $logger;
 
     public function __construct()
     {
         $f = func_get_args();
-        $this->db = new DB('localhost', 'root', 'root', 'uuii');
+        $this->logger = new Logger(LogOutput::Console);
+        $this->db = new DB('localhost', 'root', 'root', 'uuii', $this->logger);
+        $this->logger->write(LogMessageType::Notice, 'Starting tests ...');
         parent::__construct(...$f);
     }
 

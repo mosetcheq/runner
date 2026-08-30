@@ -17,6 +17,8 @@ final class Defaults {
     public const DEFAULT_METHOD = 'index';
     public const CONTROLLER_NAMESPACE = '\\App\\Controllers';
     public const MIDDLEWARE_NAMESPACE = '\\App\\Middleware';
+    public const CONTROLLER_POSTFIX = 'Controller';
+    public const METHOD_POSTFIX = '';
 }
 
 final class DB {
