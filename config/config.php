@@ -13,7 +13,7 @@ final class Path {
 }
 
 final class Defaults {
-    public const DEFAULT_CONTROLLER = \App\Controllers\Home::class;
+    public const DEFAULT_CONTROLLER = \App\Controllers\HomeController::class;
     public const DEFAULT_METHOD = 'index';
     public const CONTROLLER_NAMESPACE = '\\App\\Controllers';
     public const MIDDLEWARE_NAMESPACE = '\\App\\Middleware';

@@ -3,7 +3,7 @@ namespace App\Controllers;
 use Rnr\Http\Request;
 use Rnr\Http\Response;
 
-class Home
+class HomeController
 {
     public function Index(Request $request) : Response
     {

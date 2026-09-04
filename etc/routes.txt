@@ -1,12 +1,12 @@
-ANY login => User:login
-GET logout => User:logout @user
-GET register => User:register
+ANY login => UserController:login
+GET logout => UserController:logout @user
+GET register => UserController:register
 
 GET documents/{id}/{?page} => documents:view
 
-GET REGEX .*-a(\d+)\.html => Home:Article(id_article)  #zobrazeni clanku
+GET REGEX .*-a(\d+)\.html => HomeController:Article(id_article)  #zobrazeni clanku
 
-GET admin/logout => Admin\Admin:logout @admin
+GET admin/logout => Admin\AdminController:logout @admin
 ANY admin/* => Admin\*(id,page) @admin
 
 ANY * => *(id,page) @user #fallback

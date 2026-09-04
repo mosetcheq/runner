@@ -4,7 +4,7 @@ use Rnr\Http\Request;
 use Rnr\Http\Response;
 use Rnr\Http\FormData;
 
-class User
+class UserController
 {
     public function Login(Request $request) : Response
     {

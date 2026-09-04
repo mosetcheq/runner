@@ -205,8 +205,8 @@ enum RouteType: string
         $named = $route['params'] ?? [];
 
         $s = new RouterStatus;
-        $s->controller = Config\Defaults::CONTROLLER_NAMESPACE . '\\' . $route['namespace'] . '\\' . $controller;
-        $s->method = $method;
+        $s->controller = Config\Defaults::CONTROLLER_NAMESPACE . '\\' . $route['namespace'] . '\\' . $controller . Config\Defaults::CONTROLLER_POSTFIX;
+        $s->method = $method . Config\Defaults::METHOD_POSTFIX;
         $s->middleware = $route['middleware'] ?? [];
 
         // named params

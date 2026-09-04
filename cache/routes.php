@@ -14,7 +14,7 @@ return array (
     'middleware' => 
     array (
     ),
-    'controller' => 'User',
+    'controller' => 'UserController',
     'methodName' => 'login',
   ),
   1 => 
@@ -29,7 +29,7 @@ return array (
     array (
       0 => 'user',
     ),
-    'controller' => 'User',
+    'controller' => 'UserController',
     'methodName' => 'logout',
   ),
   2 => 
@@ -43,7 +43,7 @@ return array (
     'middleware' => 
     array (
     ),
-    'controller' => 'User',
+    'controller' => 'UserController',
     'methodName' => 'register',
   ),
   3 => 
@@ -99,7 +99,7 @@ return array (
     'middleware' => 
     array (
     ),
-    'controller' => 'Home',
+    'controller' => 'HomeController',
     'methodName' => 'Article',
   ),
   5 => 
@@ -114,7 +114,7 @@ return array (
     array (
       0 => 'admin',
     ),
-    'controller' => 'Admin\\Admin',
+    'controller' => 'Admin\\AdminController',
     'methodName' => 'logout',
   ),
   6 => 
