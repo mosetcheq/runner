@@ -1,12 +1,17 @@
+# pevné routy
 ANY login => UserController:login
 GET logout => UserController:logout @user
 GET register => UserController:register
 
+# parametrická routa
 GET documents/{id}/{?page} => documents:view
 
+# regexp routa
 GET REGEX .*-a(\d+)\.html => HomeController:Article(id_article)  #zobrazeni clanku
 
+# wildcard routa (např. kombinace fallback a parametrů)
 GET admin/logout => Admin\AdminController:logout @admin
 ANY admin/* => Admin\*(id,page) @admin
 
+# fallback routa (primárně controler/metoda)
 ANY * => *(id,page) @user #fallback

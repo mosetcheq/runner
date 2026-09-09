@@ -72,6 +72,16 @@ final class RouterStatus
     {
         return Response::JSON(['error' => $this->errorMessage])->responseCode($this->errorCode);
     }
+
+    /**
+     * Vrátí text chyby
+     *
+     * @return string
+     */
+    public function getError() : string
+    {
+        return $this->errorMessage;
+    }
 }
 
 
@@ -229,7 +239,7 @@ enum RouteType: string
 
         $named = $route['params'] ?? [];
 
-        $full = Config\Defaults::CONTROLLER_NAMESPACE . '\\' . $controller;
+        $full = Config\Defaults::CONTROLLER_NAMESPACE . '\\' . $controller . Config\Defaults::CONTROLLER_POSTFIX;
         if (!class_exists($full)) {
             return null;
         }

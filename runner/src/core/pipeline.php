@@ -1,6 +1,7 @@
 <?php
 namespace Rnr\Core;
 
+use \Exception;
 use Rnr\Http\Request;
 use Rnr\Http\Response;
 use Config;
@@ -42,7 +43,10 @@ class Pipeline
 
         // 3) Router dispatch
         $status = $this->router->dispatch();
-        if ($status->isError()) return $status->toResponse();
+        if ($status->isError()) {
+            throw new Exception($status->getError());
+            return $status->toResponse();
+        }
 
         // 4) Router request middleware
         foreach ($status->middleware as $mwClass) {

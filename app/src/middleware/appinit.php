@@ -13,7 +13,7 @@ class AppInit implements RequestMiddlewareInterface
         $di = DI::getInstance();
         $di->set('session', new Session());
         $di->set('error', new \Rnr\Utils\ErrorHandler());
-        $di->set('db', new \Rnr\DB\DB('localhost', 'root', '', 'uuii'));
+        // $di->set('db', new \Rnr\DB\DB('localhost', 'root', 'root', 'uuii'));
         return $request;
     }
 }

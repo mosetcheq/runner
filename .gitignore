@@ -2,3 +2,5 @@ logs
 application.log
 /vendor/
 /OLD_APP/
+/logs/
+composer.*
