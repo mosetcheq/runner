@@ -45,6 +45,7 @@ final class RouterStatus
         $s = new self();
         $s->controller = Config\Defaults::DEFAULT_CONTROLLER;
         $s->method = Config\Defaults::DEFAULT_METHOD;
+        $s->middleware = Config\Defaults::DEFAULT_MIDDLEWARE;
         return $s;
     }
 

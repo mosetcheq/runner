@@ -13,10 +13,15 @@ final class Path {
 }
 
 final class Defaults {
+    // DEFAULT ACTION
     public const DEFAULT_CONTROLLER = \App\Controllers\HomeController::class;
     public const DEFAULT_METHOD = 'index';
+    // Middleware pro Default Action - jako pole aliasu
+    public const DEFAULT_MIDDLEWARE = [];
+
     public const CONTROLLER_NAMESPACE = '\\App\\Controllers';
     public const MIDDLEWARE_NAMESPACE = '\\App\\Middleware';
+
     public const CONTROLLER_POSTFIX = 'Controller';
     public const METHOD_POSTFIX = '';
 }
