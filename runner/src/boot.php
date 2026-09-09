@@ -16,6 +16,11 @@ Autoloader::addMap([
     'App\\' => Config\Path::APP . 'src/'
 ]);
 
+// test jestli máme Cache dir
+if (!is_dir(\Config\Path::CACHE)) {
+    mkdir(\Config\Path::CACHE, 0777, true);
+}
+
 // inicializace DI kontejneru
 $request = new Request();
 $request->formHandler = new FormHandler($request);
