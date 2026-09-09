@@ -3,4 +3,5 @@ application.log
 /vendor/
 /OLD_APP/
 /logs/
+/cache/
 composer.*
